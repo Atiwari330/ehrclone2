@@ -192,7 +192,7 @@ Using WSJF (Weighted Shortest Job First):
     - `/ai-chatbot/app/(chat)/layout.tsx`
 
 ### 3.6 Progress Checkpoint #3
-- [ ] **Story**: As an AI builder, I need to test navigation and document progress.
+- [x] **Story**: As an AI builder, I need to test navigation and document progress.
   - **Priority**: P2
   - **Dependencies**: 3.1-3.5
   - **Acceptance Criteria**:
@@ -254,7 +254,7 @@ Using WSJF (Weighted Shortest Job First):
     - `/ai-chatbot/components/sidebar-history.tsx` for list patterns
 
 ### 4.5 Human Testing Checkpoint #4
-- [ ] **Story**: As a product owner, I need to review the Today view UI.
+- [x] **Story**: As a product owner, I need to review the Today view UI.
   - **Priority**: P2
   - **Dependencies**: 4.1-4.4
   - **Acceptance Criteria**:
@@ -278,7 +278,7 @@ Using WSJF (Weighted Shortest Job First):
     - List required API keys/configs
 
 ### 5.2 Session State Management
-- [ ] **Story**: As a developer, I need to create session state management.
+- [x] **Story**: As a developer, I need to create session state management.
   - **Priority**: P2
   - **Dependencies**: 5.1
   - **Acceptance Criteria**:
@@ -289,7 +289,7 @@ Using WSJF (Weighted Shortest Job First):
     - `/ai-chatbot/hooks/use-chat.tsx` for state patterns
 
 ### 5.3 Live Session Route
-- [ ] **Story**: As a developer, I need to create the live session view.
+- [x] **Story**: As a developer, I need to create the live session view.
   - **Priority**: P2
   - **Dependencies**: 5.2
   - **Acceptance Criteria**:
@@ -407,7 +407,7 @@ Using WSJF (Weighted Shortest Job First):
     - `/ai-chatbot/components/diffview.tsx`
 
 ### 7.4 Human Testing Checkpoint #6
-- [ ] **Story**: As a clinical supervisor, I need to test the review workflow.
+- [x] **Story**: As a clinical supervisor, I need to test the review workflow.
   - **Priority**: P3
   - **Dependencies**: 7.1-7.3
   - **Acceptance Criteria**:
@@ -636,7 +636,7 @@ Using WSJF (Weighted Shortest Job First):
 ## Completion Status
 
 **Total Stories**: 66
-**Completed**: 27
+**Completed**: 32
 **In Progress**: 0
 **Blocked**: 0
 
