@@ -31,6 +31,7 @@ interface ClientTableProps {
   data: ClientListItem[];
   sorting: SortingState;
   setSorting: OnChangeFn<SortingState>;
+  onViewClient?: (client: ClientListItem) => void;
 }
 
 // Helper function to format dates
@@ -71,7 +72,7 @@ const getStatusText = (status: ClientListItem['status']) => {
   }
 };
 
-export function ClientTable({ data, sorting, setSorting }: ClientTableProps) {
+export function ClientTable({ data, sorting, setSorting, onViewClient }: ClientTableProps) {
   // Define columns
   const columns = useMemo<ColumnDef<ClientListItem>[]>(
     () => [
@@ -279,6 +280,7 @@ export function ClientTable({ data, sorting, setSorting }: ClientTableProps) {
                 size="sm" 
                 variant="ghost"
                 title="View client details"
+                onClick={() => onViewClient?.(client)}
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -301,7 +303,7 @@ export function ClientTable({ data, sorting, setSorting }: ClientTableProps) {
         },
       },
     ],
-    []
+    [onViewClient]
   );
 
   // Create table instance

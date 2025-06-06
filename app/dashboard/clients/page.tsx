@@ -8,6 +8,7 @@ import { Users, UserCheck, UserPlus, Calendar, Search } from 'lucide-react';
 import type { ClientListItem, ClientStatus } from '@/lib/types/client';
 import { calculateAge, formatPhoneNumber } from '@/lib/types/client';
 import { ClientTable } from '@/components/client-table';
+import { ClientDrawer } from '@/components/client-drawer';
 import type { SortingState } from '@tanstack/react-table';
 
 // Mock client data - in a real app, this would come from the database
@@ -513,6 +514,14 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [selectedClient, setSelectedClient] = useState<ClientListItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  
+  // Handle viewing a client
+  const handleViewClient = (client: ClientListItem) => {
+    setSelectedClient(client);
+    setDrawerOpen(true);
+  };
   
   // Filter data based on search query and status
   const filteredData = useMemo(() => {
@@ -682,10 +691,18 @@ export default function ClientsPage() {
               data={filteredData} 
               sorting={sorting}
               setSorting={setSorting}
+              onViewClient={handleViewClient}
             />
           )}
         </CardContent>
       </Card>
+      
+      {/* Client Drawer */}
+      <ClientDrawer
+        client={selectedClient}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
     </div>
   );
 }

@@ -331,7 +331,7 @@ Using WSJF (Weighted Shortest Job First):
 ## Epic 6: Client Detail Drawer
 
 ### 6.1 Create Client Drawer Component
-- [ ] **Story**: As a developer, I need a drawer component for patient details so that information is accessible without navigation.
+- [x] **Story**: As a developer, I need a drawer component for patient details so that information is accessible without navigation.
   - **Priority**: P2
   - **Dependencies**: 5.6
   - **Acceptance Criteria**:
@@ -345,7 +345,7 @@ Using WSJF (Weighted Shortest Job First):
     - Sheet, SheetContent, SheetHeader, SheetTitle
 
 ### 6.2 Design Drawer Header Section
-- [ ] **Story**: As a provider, I need to see patient photo and basic info so that I can identify them quickly.
+- [x] **Story**: As a provider, I need to see patient photo and basic info so that I can identify them quickly.
   - **Priority**: P2
   - **Dependencies**: 6.1
   - **Acceptance Criteria**:
@@ -360,7 +360,7 @@ Using WSJF (Weighted Shortest Job First):
     - Typography utilities
 
 ### 6.3 Add Contact Information Section
-- [ ] **Story**: As a provider, I need patient contact details so that I can reach them if needed.
+- [x] **Story**: As a provider, I need patient contact details so that I can reach them if needed.
   - **Priority**: P2
   - **Dependencies**: 6.1
   - **Acceptance Criteria**:
@@ -375,7 +375,7 @@ Using WSJF (Weighted Shortest Job First):
     - Link styling
 
 ### 6.4 Add Insurance Information
-- [ ] **Story**: As a provider, I need to see insurance details so that I know coverage information.
+- [x] **Story**: As a provider, I need to see insurance details so that I know coverage information.
   - **Priority**: P3
   - **Dependencies**: 6.1
   - **Acceptance Criteria**:
@@ -387,7 +387,7 @@ Using WSJF (Weighted Shortest Job First):
     - `ai-chatbot/components/client-drawer.tsx`
 
 ### 6.5 Display Recent Visits
-- [ ] **Story**: As a provider, I need to see recent visits so that I understand patient history.
+- [x] **Story**: As a provider, I need to see recent visits so that I understand patient history.
   - **Priority**: P2
   - **Dependencies**: 6.1
   - **Acceptance Criteria**:
@@ -399,7 +399,7 @@ Using WSJF (Weighted Shortest Job First):
     - `ai-chatbot/components/client-drawer.tsx`
 
 ### 6.6 Add Medical Conditions
-- [ ] **Story**: As a provider, I need to see active conditions so that I'm aware of patient health status.
+- [x] **Story**: As a provider, I need to see active conditions so that I'm aware of patient health status.
   - **Priority**: P2
   - **Dependencies**: 6.1
   - **Acceptance Criteria**:
@@ -413,7 +413,7 @@ Using WSJF (Weighted Shortest Job First):
     - Badge component for conditions
 
 ### 6.7 Integrate Drawer with Table
-- [ ] **Story**: As a provider, I need the drawer to open when I click View so that I can see patient details.
+- [x] **Story**: As a provider, I need the drawer to open when I click View so that I can see patient details.
   - **Priority**: P2
   - **Dependencies**: 6.1, 5.6
   - **Acceptance Criteria**:
@@ -634,9 +634,9 @@ Using WSJF (Weighted Shortest Job First):
 ## Completion Status
 
 **Total Stories**: 54
-**Completed**: 14
+**Completed**: 21
 **In Progress**: 0
 **Blocked**: 0
 
 Last Updated: 2025-01-06
-Next Task: Epic 6.1 (Create Client Drawer Component) [P2]
+Next Task: Epic 6.8 (Human Review Checkpoint #2) [P1]
