@@ -34,7 +34,11 @@ export async function middleware(request: NextRequest) {
   const isGuest = guestRegex.test(token?.email ?? '');
 
   if (token && !isGuest && ['/login', '/register'].includes(pathname)) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/dashboard/today', request.url));
+  }
+
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard/today', request.url));
   }
 
   return NextResponse.next();

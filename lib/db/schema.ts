@@ -168,3 +168,43 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// EHR-specific tables
+
+export const patient = pgTable('patient', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp('createdAt').notNull(),
+  firstName: varchar('first_name', { length: 100 }).notNull(),
+  lastName: varchar('last_name', { length: 100 }).notNull(),
+  dateOfBirth: timestamp('date_of_birth').notNull(),
+  gender: varchar('gender', { length: 20 }),
+  contactPhone: varchar('contact_phone', { length: 20 }),
+  contactEmail: varchar('contact_email', { length: 64 }),
+  address: text('address'),
+  photoUrl: text('photo_url'),
+});
+
+export type Patient = InferSelectModel<typeof patient>;
+
+export const provider = pgTable('provider', {
+  id: uuid('id').primaryKey().notNull().references(() => user.id),
+  title: varchar('title', { length: 100 }),
+  specialty: varchar('specialty', { length: 100 }),
+  npiNumber: varchar('npi_number', { length: 10 }),
+});
+
+export type Provider = InferSelectModel<typeof provider>;
+
+export const session = pgTable('session', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp('createdAt').notNull(),
+  patientId: uuid('patient_id').notNull().references(() => patient.id),
+  providerId: uuid('provider_id').notNull().references(() => provider.id),
+  sessionType: varchar('session_type', { length: 50 }).notNull(),
+  sessionStatus: varchar('session_status', { length: 50 }).notNull(),
+  scheduledAt: timestamp('scheduled_at').notNull(),
+  endedAt: timestamp('ended_at'),
+  videoCallLink: text('video_call_link'),
+});
+
+export type Session = InferSelectModel<typeof session>;
