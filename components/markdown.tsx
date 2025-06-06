@@ -8,6 +8,48 @@ const components: Partial<Components> = {
   // @ts-expect-error
   code: CodeBlock,
   pre: ({ children }) => <>{children}</>,
+  p: ({ children }) => {
+    // Check if the paragraph contains any code blocks at any level
+    // to avoid invalid HTML nesting of <pre> inside <p>
+    const hasCodeBlock = (element: any): boolean => {
+      if (!element) return false;
+      
+      // Check if this element is a code block
+      if (React.isValidElement(element)) {
+        if (
+          element.type === CodeBlock ||
+          // @ts-expect-error
+          element.props?.node?.tagName === 'code' ||
+          // @ts-expect-error
+          element.props?.className?.includes('language-') ||
+          // @ts-expect-error
+          element.type?.name === 'CodeBlock'
+        ) {
+          return true;
+        }
+        
+        // Check children recursively
+        if (element.props?.children) {
+          const childrenArray = React.Children.toArray(element.props.children);
+          return childrenArray.some((child) => hasCodeBlock(child));
+        }
+      }
+      
+      // Check if it's an array of elements
+      if (Array.isArray(element)) {
+        return element.some((child) => hasCodeBlock(child));
+      }
+      
+      return false;
+    };
+    
+    // If any child contains a code block, render without paragraph wrapper
+    if (hasCodeBlock(children)) {
+      return <div className="mb-2 last:mb-0">{children}</div>;
+    }
+    
+    return <p className="mb-2 last:mb-0">{children}</p>;
+  },
   ol: ({ node, children, ...props }) => {
     return (
       <ol className="list-decimal list-outside ml-4" {...props}>
