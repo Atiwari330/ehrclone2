@@ -9,6 +9,7 @@ import {
   Home,
   Radio,
   Settings,
+  Users,
 } from 'lucide-react';
 import type { User } from 'next-auth';
 import Link from 'next/link';
@@ -31,6 +32,11 @@ const navItems = [
     label: 'Today',
     href: '/dashboard/today',
     icon: <Home />,
+  },
+  {
+    label: 'Clients',
+    href: '/dashboard/clients',
+    icon: <Users />,
   },
   {
     label: 'Calendar',
