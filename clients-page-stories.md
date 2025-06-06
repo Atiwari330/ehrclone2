@@ -212,18 +212,10 @@ Using WSJF (Weighted Shortest Job First):
     - `ai-chatbot/app/dashboard/billing/page.tsx` (status filters)
 
 ### 4.3 Create Bulk Actions Dropdown
-- [ ] **Story**: As a provider, I need bulk action options so that I can manage multiple patients efficiently.
+- [ ] ~~**Story**: As a provider, I need bulk action options so that I can manage multiple patients efficiently.~~ (REPLACED BY EPIC 9)
   - **Priority**: P3
   - **Dependencies**: 3.3
-  - **Acceptance Criteria**:
-    - Create dropdown with bulk actions
-    - Include: Send Message, Export, Assign to Team
-    - Show only when items are selected
-    - Log actions to console (no backend implementation)
-  - **Files to Create**: 
-    - `ai-chatbot/components/client-actions.tsx`
-  - **UI Components to Use**: 
-    - DropdownMenu, DropdownMenuTrigger, DropdownMenuItem
+  - **Note**: This story has been replaced by Epic 9: Client Outcomes Progress
 
 ## Epic 5: Data Table Implementation
 
@@ -257,18 +249,10 @@ Using WSJF (Weighted Shortest Job First):
     - Custom cell renderers
 
 ### 5.3 Implement Row Selection
-- [ ] **Story**: As a provider, I need to select multiple patients so that I can perform bulk actions.
+- [ ] ~~**Story**: As a provider, I need to select multiple patients so that I can perform bulk actions.~~ (REPLACED BY EPIC 9)
   - **Priority**: P3
   - **Dependencies**: 5.2
-  - **Acceptance Criteria**:
-    - Add checkbox column for selection
-    - Implement select all functionality
-    - Track selected rows in state
-    - Update bulk actions visibility based on selection
-  - **Files to Update**: 
-    - `ai-chatbot/components/client-table.tsx`
-  - **Pattern Reference**: 
-    - Standard TanStack Table selection pattern
+  - **Note**: This story has been replaced by Epic 9: Client Outcomes Progress
 
 ### 5.4 Add Sorting Functionality
 - [x] **Story**: As a provider, I need to sort the patient list so that I can organize by different criteria.
@@ -426,7 +410,7 @@ Using WSJF (Weighted Shortest Job First):
     - `ai-chatbot/components/client-table.tsx`
 
 ### 6.8 Human Review Checkpoint #2
-- [ ] **Story**: As a product owner, I need to review the implemented UI before final polish.
+- [x] **Story**: As a product owner, I need to review the implemented UI before final polish.
   - **Priority**: P1
   - **Dependencies**: 6.7
   - **Acceptance Criteria**:
@@ -580,6 +564,151 @@ Using WSJF (Weighted Shortest Job First):
     - Code quality approved
     - Feature ready for production
 
+## Epic 9: Client Outcomes Progress
+
+### 9.1 Install Recharts Library
+- [x] **Story**: As a developer, I need to install Recharts so that I can create data visualizations.
+  - **Priority**: P1
+  - **Dependencies**: 6.8
+  - **Acceptance Criteria**:
+    - Run `npm install recharts`
+    - Verify package added to package.json
+    - Import successfully in test file
+    - No TypeScript errors
+  - **Files to Update**: 
+    - `ai-chatbot/package.json`
+
+### 9.2 Create Outcomes Modal Component
+- [x] **Story**: As a developer, I need a modal component for displaying outcome trends so that data is presented clearly.
+  - **Priority**: P1
+  - **Dependencies**: 9.1
+  - **Acceptance Criteria**:
+    - Create new component file for outcomes modal
+    - Use Dialog component from shadcn/ui
+    - Accept patient data and outcome data as props
+    - Implement large modal size (80% viewport width, 90% height)
+    - Add scrollable content area
+  - **Files to Create**: 
+    - `ai-chatbot/components/outcomes-modal.tsx`
+  - **UI Components to Use**: 
+    - Dialog, DialogContent, DialogHeader, DialogTitle
+    - ScrollArea for content
+
+### 9.3 Add PHQ-9 Data to Mock Patient
+- [x] **Story**: As a developer, I need to add outcome data to John Doe so that I can display progress.
+  - **Priority**: P1
+  - **Dependencies**: 9.2
+  - **Acceptance Criteria**:
+    - Add outcomes property to ClientListItem type
+    - Create PHQ9Assessment interface with date and score
+    - Add 6 data points for John Doe showing improvement
+    - Use dates: Oct 15, Oct 29, Nov 12, Nov 26, Dec 10, Jan 7
+    - Scores: 22, 19, 16, 12, 9, 6 (showing improvement)
+  - **Files to Update**: 
+    - `ai-chatbot/lib/types/client.ts`
+    - `ai-chatbot/app/dashboard/clients/page.tsx`
+
+### 9.4 Add Outcomes Icon to Table Actions
+- [x] **Story**: As a provider, I need an outcomes button so that I can view patient progress trends.
+  - **Priority**: P2
+  - **Dependencies**: 9.3
+  - **Acceptance Criteria**:
+    - Import TrendingUp icon from lucide-react
+    - Add icon button after View button in actions
+    - Add tooltip "Outcomes" on hover
+    - Gray out icon for patients without outcome data
+    - Implement onClick handler to open modal
+  - **Files to Update**: 
+    - `ai-chatbot/components/client-table.tsx`
+  - **UI Components to Use**: 
+    - Button with ghost variant
+    - Tooltip component
+    - TrendingUp icon
+
+### 9.5 Implement PHQ-9 Progress Chart
+- [x] **Story**: As a provider, I need to see PHQ-9 trends so that I can assess treatment effectiveness.
+  - **Priority**: P2
+  - **Dependencies**: 9.4
+  - **Acceptance Criteria**:
+    - Create LineChart with smooth curves
+    - X-axis: Formatted dates (MMM DD)
+    - Y-axis: PHQ-9 scores (0-27)
+    - Add severity band backgrounds (translucent colors)
+    - Animate line drawing on modal open
+    - Show data point markers with hover effects
+  - **Files to Update**: 
+    - `ai-chatbot/components/outcomes-modal.tsx`
+  - **Chart Features**: 
+    - Severity bands: Minimal (0-4 green), Mild (5-9 yellow), Moderate (10-14 orange), Moderately Severe (15-19 light red), Severe (20-27 dark red)
+    - Gradient line color from red to green
+    - Tooltip showing score, date, and change
+
+### 9.6 Add Key Metrics Summary
+- [x] **Story**: As a provider, I need summary statistics so that I can quickly understand overall progress.
+  - **Priority**: P2
+  - **Dependencies**: 9.5
+  - **Acceptance Criteria**:
+    - Display starting score vs current score
+    - Calculate and show total improvement (points and percentage)
+    - Add trend indicator arrow (↓ Improving)
+    - Position metrics above the chart
+    - Use cards or badges for visual appeal
+  - **Files to Update**: 
+    - `ai-chatbot/components/outcomes-modal.tsx`
+  - **UI Components to Use**: 
+    - Card components for metrics
+    - ArrowDown icon for improvement indicator
+
+### 9.7 Integrate Modal with Client Table
+- [x] **Story**: As a provider, I need the modal to open when clicking outcomes so that I can view the data.
+  - **Priority**: P2
+  - **Dependencies**: 9.6
+  - **Acceptance Criteria**:
+    - Pass onViewOutcomes callback from page to table
+    - Connect outcomes button click to modal open
+    - Pass selected patient data to modal
+    - Handle modal close events properly
+    - Test with John Doe (has data) and others (no data)
+  - **Files to Update**: 
+    - `ai-chatbot/app/dashboard/clients/page.tsx`
+    - `ai-chatbot/components/client-table.tsx`
+
+### 9.8 Visual Polish for Demo Day
+- [x] **Story**: As a presenter, I need the outcomes feature to be visually impressive so that value is immediately apparent.
+  - **Priority**: P2
+  - **Dependencies**: 9.7
+  - **Acceptance Criteria**:
+    - Add smooth transitions and animations
+    - Ensure responsive design on different screens
+    - Polish colors and spacing
+    - Test full user flow multiple times
+    - Verify immediate visual impact
+  - **Files to Update**: 
+    - `ai-chatbot/components/outcomes-modal.tsx`
+    - Any files needing visual improvements
+
+### 9.9 Update Documentation
+- [x] **Story**: As a developer, I need to document the outcomes feature so that it can be extended later.
+  - **Priority**: P3
+  - **Dependencies**: 9.8
+  - **Acceptance Criteria**:
+    - Document component architecture
+    - Note data structure for outcomes
+    - Include screenshot of feature
+    - List future enhancement ideas (GAD-7, etc.)
+  - **Files to Update**: 
+    - `ai-chatbot/clients-feature-docs.md` (when created)
+
+### 9.10 Human Review of Outcomes Feature
+- [ ] **Story**: As a product owner, I need to review the outcomes feature for demo readiness.
+  - **Priority**: P1
+  - **Dependencies**: 9.8
+  - **Acceptance Criteria**:
+    - Feature demonstration completed
+    - Visual appeal confirmed for demo day
+    - Immediate value proposition clear
+    - Any feedback incorporated
+
 ## Sprint Mapping
 
 ### Sprint 1 (Days 1-2): Foundation & Setup
@@ -589,16 +718,19 @@ Using WSJF (Weighted Shortest Job First):
 - Checkpoint #1
 
 ### Sprint 2 (Days 3-4): Core Table Implementation  
-- Epic 4: All stories (4.1-4.3) - Search and filters
-- Epic 5: Stories 5.1-5.6 - Table implementation
+- Epic 4: Stories 4.1-4.2 - Search and filters (4.3 replaced by Epic 9)
+- Epic 5: Stories 5.1-5.2, 5.4-5.6 - Table implementation (5.3 replaced by Epic 9)
 - Progress checkpoint 5.7
 
 ### Sprint 3 (Days 5-6): Detail View & Integration
 - Epic 6: All stories (6.1-6.8) - Client drawer
 - Checkpoint #2
 
-### Sprint 4 (Days 7-8): Polish & Completion
-- Epic 7: All stories (7.1-7.5) - Visual polish
+### Sprint 4 (Days 7-8): Outcomes & Polish
+- Epic 9: All stories (9.1-9.10) - Client outcomes progress
+- Epic 7: Key stories (7.1-7.3) - Essential visual polish
+
+### Sprint 5 (Days 9-10): Final Integration
 - Epic 8: All stories (8.1-8.6) - Testing and documentation
 - Checkpoint #3
 
@@ -633,10 +765,10 @@ Using WSJF (Weighted Shortest Job First):
 
 ## Completion Status
 
-**Total Stories**: 54
-**Completed**: 21
+**Total Stories**: 62
+**Completed**: 30
 **In Progress**: 0
 **Blocked**: 0
 
 Last Updated: 2025-01-06
-Next Task: Epic 6.8 (Human Review Checkpoint #2) [P1]
+Next Task: Epic 9.10 (Human Review of Outcomes Feature) [P1]

@@ -9,6 +9,7 @@ import type { ClientListItem, ClientStatus } from '@/lib/types/client';
 import { calculateAge, formatPhoneNumber } from '@/lib/types/client';
 import { ClientTable } from '@/components/client-table';
 import { ClientDrawer } from '@/components/client-drawer';
+import { OutcomesModal } from '@/components/outcomes-modal';
 import type { SortingState } from '@tanstack/react-table';
 
 // Mock client data - in a real app, this would come from the database
@@ -36,6 +37,16 @@ const mockClientData: ClientListItem[] = [
     conditions: ['Hypertension', 'Type 2 Diabetes'],
     mrn: 'MRN001234',
     age: calculateAge(new Date('1985-06-15')),
+    outcomes: {
+      phq9: [
+        { date: new Date('2024-10-15'), score: 22 },
+        { date: new Date('2024-10-29'), score: 19 },
+        { date: new Date('2024-11-12'), score: 16 },
+        { date: new Date('2024-11-26'), score: 12 },
+        { date: new Date('2024-12-10'), score: 9 },
+        { date: new Date('2025-01-07'), score: 6 },
+      ],
+    },
   },
   {
     id: '2',
@@ -516,11 +527,18 @@ export default function ClientsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedClient, setSelectedClient] = useState<ClientListItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [outcomesModalOpen, setOutcomesModalOpen] = useState(false);
   
   // Handle viewing a client
   const handleViewClient = (client: ClientListItem) => {
     setSelectedClient(client);
     setDrawerOpen(true);
+  };
+  
+  // Handle viewing outcomes
+  const handleViewOutcomes = (client: ClientListItem) => {
+    setSelectedClient(client);
+    setOutcomesModalOpen(true);
   };
   
   // Filter data based on search query and status
@@ -692,6 +710,7 @@ export default function ClientsPage() {
               sorting={sorting}
               setSorting={setSorting}
               onViewClient={handleViewClient}
+              onViewOutcomes={handleViewOutcomes}
             />
           )}
         </CardContent>
@@ -702,6 +721,13 @@ export default function ClientsPage() {
         client={selectedClient}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
+      />
+      
+      {/* Outcomes Modal */}
+      <OutcomesModal
+        client={selectedClient}
+        open={outcomesModalOpen}
+        onOpenChange={setOutcomesModalOpen}
       />
     </div>
   );

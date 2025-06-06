@@ -12,6 +12,12 @@ import {
   OnChangeFn,
 } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   ArrowUpDown,
   ArrowUp,
@@ -22,7 +28,8 @@ import {
   Play,
   UserCheck,
   UserPlus,
-  UserX
+  UserX,
+  TrendingUp
 } from 'lucide-react';
 import type { ClientListItem } from '@/lib/types/client';
 import { formatPhoneNumber, getStatusColor } from '@/lib/types/client';
@@ -32,6 +39,7 @@ interface ClientTableProps {
   sorting: SortingState;
   setSorting: OnChangeFn<SortingState>;
   onViewClient?: (client: ClientListItem) => void;
+  onViewOutcomes?: (client: ClientListItem) => void;
 }
 
 // Helper function to format dates
@@ -72,7 +80,7 @@ const getStatusText = (status: ClientListItem['status']) => {
   }
 };
 
-export function ClientTable({ data, sorting, setSorting, onViewClient }: ClientTableProps) {
+export function ClientTable({ data, sorting, setSorting, onViewClient, onViewOutcomes }: ClientTableProps) {
   // Define columns
   const columns = useMemo<ColumnDef<ClientListItem>[]>(
     () => [
@@ -284,6 +292,23 @@ export function ClientTable({ data, sorting, setSorting, onViewClient }: ClientT
               >
                 <Eye className="h-4 w-4" />
               </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      disabled={!client.outcomes?.phq9 || client.outcomes.phq9.length === 0}
+                      onClick={() => onViewOutcomes?.(client)}
+                    >
+                      <TrendingUp className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Outcomes</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button 
                 size="sm" 
                 variant="ghost"
@@ -303,7 +328,7 @@ export function ClientTable({ data, sorting, setSorting, onViewClient }: ClientT
         },
       },
     ],
-    [onViewClient]
+    [onViewClient, onViewOutcomes]
   );
 
   // Create table instance

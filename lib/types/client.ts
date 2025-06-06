@@ -4,6 +4,18 @@ import type { Patient } from '@/lib/db/schema';
 
 export type ClientStatus = 'active' | 'inactive' | 'new';
 
+// PHQ-9 Assessment data
+export interface PHQ9Assessment {
+  date: Date;
+  score: number;
+}
+
+// Outcome data for a client
+export interface ClientOutcomes {
+  phq9?: PHQ9Assessment[];
+  // Future: gad7, audit, etc.
+}
+
 export interface InsuranceInfo {
   provider: string;
   memberId: string;
@@ -28,6 +40,7 @@ export interface ClientListItem extends Patient {
   conditions?: string[];
   mrn: string; // Medical Record Number
   age: number; // Calculated from dateOfBirth
+  outcomes?: ClientOutcomes; // Outcome assessment data
 }
 
 // Type for client detail view
