@@ -54,6 +54,12 @@ export interface MedicalSession {
 export interface SessionAIState {
   isProcessing: boolean;
   lastProcessedTimestamp?: Date;
+  
+  // Real-time transcription state
+  isRecording: boolean;
+  isTranscribing: boolean;
+  currentPartialTranscript?: string;
+  
   extractedData?: {
     chiefComplaint?: string;
     hpi?: string;
@@ -77,6 +83,16 @@ export interface SessionActions {
   updateAIState: (state: Partial<SessionAIState>) => void;
   addParticipant: (participant: SessionParticipant) => void;
   removeParticipant: (participantId: string) => void;
+  
+  // Real-time transcription actions
+  startRecording: () => Promise<void>;
+  stopRecording: () => Promise<void>;
+  updatePartialTranscript: (text: string) => void;
+  clearPartialTranscript: () => void;
+  
+  // Transcript management functions
+  addTranscript: (text: string, isFinal: boolean) => void;
+  addMockTranscript: (text: string) => void;
 }
 
 export interface SessionContextValue {

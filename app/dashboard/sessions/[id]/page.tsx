@@ -18,10 +18,13 @@ import {
   Users,
   Clock,
   AlertCircle,
-  Loader2
+  Loader2,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { SessionProvider } from '@/contexts/session-context';
 import { useSessionManager, useTranscriptScroll } from '@/hooks/use-session';
+import { useSessionTranscription } from '@/hooks/use-session-transcription';
 import { MedicalSession } from '@/lib/types/session';
 
 // Mock session data for testing
@@ -59,18 +62,26 @@ function SessionContent() {
     session,
     isLoading,
     error,
-    isRecording,
     transcriptLength,
     aiSuggestions,
     medicalData,
-    toggleRecording,
     endSession,
-    addMockTranscript,
     sessionDuration,
     isSessionActive,
     canStartSession,
     canEndSession,
   } = useSessionManager({ sessionId, autoStart: false });
+  
+  // Real-time transcription hook
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    isConnected,
+    connectionStatus,
+    currentPartialTranscript,
+    error: transcriptionError,
+  } = useSessionTranscription();
   
   const { containerRef, handleScroll, scrollToBottom, isAtBottom } = useTranscriptScroll(session?.transcript || []);
   
@@ -91,25 +102,38 @@ function SessionContent() {
   
   // Handle session end
   const handleEndSession = async () => {
+    console.log('[SessionPage] handleEndSession called');
+    if (isRecording) {
+      console.log('[SessionPage] Stopping recording before ending session...');
+      await stopRecording();
+    }
     await endSession();
     router.push('/dashboard/sessions');
   };
   
-  // Add test transcript entries
-  const addTestTranscript = () => {
-    const testPhrases = [
-      "How have you been feeling since our last visit?",
-      "I've been monitoring my blood sugar regularly, and it's been mostly stable.",
-      "That's great to hear. What about your medication adherence?",
-      "I've been taking metformin as prescribed, twice daily with meals.",
-      "Any side effects or concerns?",
-      "No major side effects, just occasional mild stomach upset.",
-    ];
-    
-    const randomPhrase = testPhrases[Math.floor(Math.random() * testPhrases.length)];
-    const speaker = Math.random() > 0.5 ? 'Provider' : 'Patient';
-    addMockTranscript(randomPhrase, speaker);
+  // Handle recording toggle
+  const handleRecordingToggle = async () => {
+    console.log('[SessionPage] handleRecordingToggle called, isRecording:', isRecording);
+    try {
+      if (isRecording) {
+        console.log('[SessionPage] Stopping recording via toggle...');
+        await stopRecording();
+      } else {
+        console.log('[SessionPage] Starting recording via toggle...');
+        await startRecording();
+      }
+    } catch (err) {
+      console.error('[SessionPage] Failed to toggle recording:', err);
+      // The error will be available in the transcriptionError state
+    }
   };
+
+  // Display transcription errors in the UI
+  useEffect(() => {
+    if (transcriptionError) {
+      console.error('Transcription error details:', transcriptionError);
+    }
+  }, [transcriptionError]);
   
   if (isLoading) {
     return (
@@ -174,6 +198,22 @@ function SessionContent() {
                   <span className="text-sm font-medium">Recording</span>
                 </div>
               )}
+              
+              {/* Connection status indicator */}
+              {isSessionActive && (
+                <div className="flex items-center space-x-2">
+                  <div className={`h-2 w-2 rounded-full ${
+                    connectionStatus === 'disconnected' ? 'bg-red-500' :
+                    connectionStatus === 'transcribing' ? 'bg-green-500 animate-pulse' :
+                    'bg-green-500'
+                  }`} />
+                  <span className="text-sm text-muted-foreground">
+                    {connectionStatus === 'disconnected' ? 'Disconnected' :
+                     connectionStatus === 'transcribing' ? 'Transcribing' :
+                     'Connected'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -210,27 +250,43 @@ function SessionContent() {
                 {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
               </Button>
               
-              {canStartSession && (
+              {canStartSession && !isRecording && (
                 <Button
                   variant="default"
                   size="lg"
-                  onClick={toggleRecording}
+                  onClick={handleRecordingToggle}
                   className="px-8"
                 >
-                  <Phone className="h-5 w-5 mr-2" />
-                  Start Session
+                  <Mic className="h-5 w-5 mr-2" />
+                  Start Recording
                 </Button>
               )}
               
               {isSessionActive && (
                 <>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    onClick={toggleRecording}
-                  >
-                    {isRecording ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                  </Button>
+                  {isRecording && (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={handleRecordingToggle}
+                      className="px-8"
+                    >
+                      <MicOff className="h-5 w-5 mr-2" />
+                      Stop Recording
+                    </Button>
+                  )}
+                  
+                  {!isRecording && session.transcript.length > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={handleRecordingToggle}
+                      className="px-8"
+                    >
+                      <Mic className="h-5 w-5 mr-2" />
+                      Resume Recording
+                    </Button>
+                  )}
                   
                   <Button
                     variant="destructive"
@@ -243,28 +299,6 @@ function SessionContent() {
                   </Button>
                 </>
               )}
-              
-              {session.status === 'paused' && (
-                <Button
-                  variant="default"
-                  size="lg"
-                  onClick={toggleRecording}
-                  className="px-8"
-                >
-                  <Play className="h-5 w-5 mr-2" />
-                  Resume Session
-                </Button>
-              )}
-              
-              {/* Test button for adding transcript */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addTestTranscript}
-                className="ml-8"
-              >
-                Add Test Transcript
-              </Button>
             </div>
           </div>
         </div>
@@ -284,29 +318,47 @@ function SessionContent() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 space-y-4"
         >
-          {session.transcript.length === 0 ? (
+          {session.transcript.length === 0 && !currentPartialTranscript ? (
             <div className="text-center text-muted-foreground py-8">
               <p>Transcript will appear here once the session starts</p>
             </div>
           ) : (
-            session.transcript.map((entry) => (
-              <div key={entry.id} className="space-y-1">
-                <div className="flex items-baseline space-x-2">
-                  <span className="font-medium text-sm">
-                    {entry.speaker}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(entry.timestamp).toLocaleTimeString()}
-                  </span>
-                  {entry.confidence && (
-                    <span className="text-xs text-muted-foreground">
-                      ({Math.round(entry.confidence * 100)}%)
+            <>
+              {session.transcript.map((entry) => (
+                <div key={entry.id} className="space-y-1">
+                  <div className="flex items-baseline space-x-2">
+                    <span className="font-medium text-sm">
+                      {entry.speaker}
                     </span>
-                  )}
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(entry.timestamp).toLocaleTimeString()}
+                    </span>
+                    {entry.confidence && entry.confidence < 0.8 && (
+                      <span className="text-xs text-amber-600">
+                        ({Math.round(entry.confidence * 100)}% confidence)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm">{entry.text}</p>
                 </div>
-                <p className="text-sm">{entry.text}</p>
-              </div>
-            ))
+              ))}
+              
+              {/* Show partial transcript while speaking */}
+              {currentPartialTranscript && (
+                <div className="space-y-1 opacity-70">
+                  <div className="flex items-baseline space-x-2">
+                    <span className="font-medium text-sm">Speaker</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date().toLocaleTimeString()}
+                    </span>
+                    <span className="text-xs text-blue-600">
+                      (speaking...)
+                    </span>
+                  </div>
+                  <p className="text-sm italic">{currentPartialTranscript}</p>
+                </div>
+              )}
+            </>
           )}
           
           {!isAtBottom && transcriptLength > 5 && (
@@ -319,9 +371,40 @@ function SessionContent() {
               Scroll to bottom
             </Button>
           )}
+          
+          {/* Show error if transcription failed */}
+          {transcriptionError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">Transcription Error</p>
+                  <p className="text-xs text-red-600 mt-1">{transcriptionError.message}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         <Separator />
+        
+        {/* Save & Review button */}
+        {session.transcript.length > 0 && (
+          <div className="p-4 border-b">
+            <Button
+              variant="default"
+              className="w-full"
+              disabled={isRecording}
+              onClick={() => {
+                // TODO: Implement save and navigate to review page
+                console.log('Save & Review clicked');
+                // router.push(`/dashboard/sessions/${sessionId}/review`);
+              }}
+            >
+              Save & Review
+            </Button>
+          </div>
+        )}
         
         {/* AI Suggestions panel */}
         <div className="p-4 space-y-3">

@@ -29,6 +29,9 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
   const [session, setSession] = useState<MedicalSession | null>(initialSession || null);
   const [aiState, setAIState] = useState<SessionAIState>({
     isProcessing: false,
+    isRecording: false,
+    isTranscribing: false,
+    currentPartialTranscript: undefined,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -187,6 +190,91 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
     });
   }, []);
 
+  // Start recording
+  const startRecording = useCallback(async () => {
+    setError(null);
+    
+    try {
+      // Update AI state to indicate recording has started
+      setAIState(prev => ({
+        ...prev,
+        isRecording: true,
+        isTranscribing: true,
+        currentPartialTranscript: undefined,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start recording');
+      throw err;
+    }
+  }, []);
+
+  // Stop recording
+  const stopRecording = useCallback(async () => {
+    setError(null);
+    
+    try {
+      // Update AI state to indicate recording has stopped
+      setAIState(prev => ({
+        ...prev,
+        isRecording: false,
+        isTranscribing: false,
+        currentPartialTranscript: undefined,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to stop recording');
+      throw err;
+    }
+  }, []);
+
+  // Update partial transcript
+  const updatePartialTranscript = useCallback((text: string) => {
+    setAIState(prev => ({
+      ...prev,
+      currentPartialTranscript: text,
+    }));
+  }, []);
+
+  // Clear partial transcript
+  const clearPartialTranscript = useCallback(() => {
+    setAIState(prev => ({
+      ...prev,
+      currentPartialTranscript: undefined,
+    }));
+  }, []);
+
+  // Add transcript (handles both partial and final transcripts from real-time transcription)
+  const addTranscript = useCallback((text: string, isFinal: boolean) => {
+    if (isFinal) {
+      // Add as a final transcript entry
+      addTranscriptEntry({
+        timestamp: new Date(),
+        speaker: 'Patient', // Default speaker for in-office sessions
+        speakerId: session?.patientId || 'unknown',
+        text,
+        confidence: 1.0, // Real-time transcripts don't provide confidence per entry
+        aiProcessed: false,
+      });
+      
+      // Clear the partial transcript
+      clearPartialTranscript();
+    } else {
+      // Update partial transcript
+      updatePartialTranscript(text);
+    }
+  }, [session, addTranscriptEntry, updatePartialTranscript, clearPartialTranscript]);
+
+  // Add mock transcript for backward compatibility and testing
+  const addMockTranscript = useCallback((text: string) => {
+    addTranscriptEntry({
+      timestamp: new Date(),
+      speaker: 'Mock Speaker',
+      speakerId: 'mock-' + Date.now(),
+      text,
+      confidence: 1.0,
+      aiProcessed: false,
+    });
+  }, [addTranscriptEntry]);
+
   const contextValue: SessionContextValue = {
     session,
     aiState,
@@ -199,6 +287,12 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
       updateAIState,
       addParticipant,
       removeParticipant,
+      startRecording,
+      stopRecording,
+      updatePartialTranscript,
+      clearPartialTranscript,
+      addTranscript,
+      addMockTranscript,
     },
     isLoading,
     error,
