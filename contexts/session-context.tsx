@@ -249,10 +249,12 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
       addTranscriptEntry({
         timestamp: new Date(),
         speaker: 'Patient', // Default speaker for in-office sessions
-        speakerId: session?.patientId || 'unknown',
+        speakerId: session?.patientId || '550e8400-e29b-41d4-a716-446655440002', // Use valid UUID
         text,
         confidence: 1.0, // Real-time transcripts don't provide confidence per entry
         aiProcessed: false,
+        isFinal: true, // Mark as final transcript
+        isPartial: false,
       });
       
       // Clear the partial transcript
@@ -272,6 +274,8 @@ export function SessionProvider({ children, initialSession }: SessionProviderPro
       text,
       confidence: 1.0,
       aiProcessed: false,
+      isFinal: true,
+      isPartial: false,
     });
   }, [addTranscriptEntry]);
 

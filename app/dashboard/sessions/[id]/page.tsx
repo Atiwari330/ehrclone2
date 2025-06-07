@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Video, 
   VideoOff, 
@@ -20,26 +21,28 @@ import {
   AlertCircle,
   Loader2,
   Wifi,
-  WifiOff
+  WifiOff,
+  FlaskConical
 } from 'lucide-react';
 import { SessionProvider } from '@/contexts/session-context';
 import { useSessionManager, useTranscriptScroll } from '@/hooks/use-session';
 import { useSessionTranscription } from '@/hooks/use-session-transcription';
 import { MedicalSession } from '@/lib/types/session';
+import { getMockTherapyTranscript } from '@/lib/mock-data/therapy-session-transcript';
 
 // Mock session data for testing
 const mockSession: MedicalSession = {
-  id: '1',
-  patientId: 'patient-1',
+  id: '550e8400-e29b-41d4-a716-446655440001', // Valid UUID
+  patientId: '550e8400-e29b-41d4-a716-446655440002', // Valid UUID
   patientName: 'John Doe',
-  providerId: 'provider-1',
+  providerId: '550e8400-e29b-41d4-a716-446655440003', // Valid UUID
   providerName: 'Dr. Sarah Johnson',
   type: 'virtual',
   status: 'scheduled',
   scheduledStart: new Date(),
   participants: [
     {
-      id: 'provider-1',
+      id: '550e8400-e29b-41d4-a716-446655440003',
       name: 'Dr. Sarah Johnson',
       role: 'provider',
       joinedAt: new Date(),
@@ -70,6 +73,7 @@ function SessionContent() {
     isSessionActive,
     canStartSession,
     canEndSession,
+    addTranscriptEntry,
   } = useSessionManager({ sessionId, autoStart: false });
   
   // Real-time transcription hook
@@ -87,6 +91,31 @@ function SessionContent() {
   
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
+  const [isLoadingMockData, setIsLoadingMockData] = useState(false);
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  
+  // Handle loading mock transcript for testing
+  const handleLoadMockTranscript = async () => {
+    setIsLoadingMockData(true);
+    try {
+      const mockEntries = getMockTherapyTranscript();
+      
+      // Add entries one by one with a small delay to simulate real-time transcription
+      for (const entry of mockEntries) {
+        if (addTranscriptEntry) {
+          addTranscriptEntry(entry);
+        }
+        // Small delay to make it feel more realistic
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      console.log(`[SessionPage] Loaded ${mockEntries.length} mock transcript entries`);
+    } catch (error) {
+      console.error('[SessionPage] Error loading mock transcript:', error);
+    } finally {
+      setIsLoadingMockData(false);
+    }
+  };
   
   // Format session duration
   const formatDuration = (seconds: number) => {
@@ -318,9 +347,57 @@ function SessionContent() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 space-y-4"
         >
-          {session.transcript.length === 0 && !currentPartialTranscript ? (
-            <div className="text-center text-muted-foreground py-8">
+          {/* Show skeleton loader when connecting to transcription service */}
+          {isRecording && connectionStatus === 'connecting' && session.transcript.length === 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Connecting to transcription service...</span>
+              </div>
+              {/* Skeleton placeholders for transcript entries */}
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-baseline space-x-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ))}
+            </div>
+          ) : session.transcript.length === 0 && !currentPartialTranscript ? (
+            <div className="text-center text-muted-foreground py-8 space-y-4">
               <p>Transcript will appear here once the session starts</p>
+              
+              {/* Test Data Button - Only show in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="pt-4 border-t border-dashed">
+                  <p className="text-xs text-amber-600 mb-2">🧪 Testing Mode</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoadMockTranscript}
+                    disabled={isLoadingMockData}
+                    className="gap-2"
+                  >
+                    {isLoadingMockData ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading Mock Data...
+                      </>
+                    ) : (
+                      <>
+                        <FlaskConical className="h-4 w-4" />
+                        Load Test Transcript
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Loads a realistic therapy session for testing
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -394,14 +471,76 @@ function SessionContent() {
             <Button
               variant="default"
               className="w-full"
-              disabled={isRecording}
-              onClick={() => {
-                // TODO: Implement save and navigate to review page
-                console.log('Save & Review clicked');
-                // router.push(`/dashboard/sessions/${sessionId}/review`);
+              disabled={isSavingTranscript}
+              onClick={async () => {
+                setIsSavingTranscript(true);
+                try {
+                  // Stop recording if currently recording
+                  if (isRecording) {
+                    console.log('[SessionPage] Stopping recording before saving...');
+                    await stopRecording();
+                  }
+                  
+                  // Calculate session duration
+                  const startTime = session.transcript[0]?.timestamp || new Date();
+                  const endTime = session.transcript[session.transcript.length - 1]?.timestamp || new Date();
+                  const calculatedDuration = Math.floor((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000);
+                  // Ensure minimum duration of 1 second
+                  const duration = Math.max(1, calculatedDuration);
+                  
+                  // Debug log the data being sent
+                  const requestData = {
+                    entries: session.transcript,
+                    duration,
+                    startTime,
+                    endTime,
+                  };
+                  console.log('[Frontend] Sending transcript data:', {
+                    sessionId,
+                    entriesCount: requestData.entries.length,
+                    duration: requestData.duration,
+                    startTime: requestData.startTime,
+                    endTime: requestData.endTime,
+                    firstEntry: requestData.entries[0],
+                    lastEntry: requestData.entries[requestData.entries.length - 1],
+                  });
+                  
+                  // Save transcript to database
+                  const response = await fetch(`/api/sessions/${sessionId}/transcript`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error('Failed to save transcript');
+                  }
+                  
+                  const data = await response.json();
+                  console.log('Transcript saved:', data.transcriptId);
+                  
+                  // Navigate to review page
+                  router.push(`/dashboard/sessions/${sessionId}/review`);
+                } catch (error) {
+                  console.error('Error saving transcript:', error);
+                  // TODO: Show error toast
+                } finally {
+                  setIsSavingTranscript(false);
+                }
               }}
             >
-              Save & Review
+              {isSavingTranscript ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : isRecording ? (
+                'Stop Recording & Save'
+              ) : (
+                'Save & Review'
+              )}
             </Button>
           </div>
         )}

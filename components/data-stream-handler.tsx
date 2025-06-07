@@ -2,6 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { artifactDefinitions, ArtifactKind } from './artifact';
 import { Suggestion } from '@/lib/db/schema';
 import { initialArtifactData, useArtifact } from '@/hooks/use-artifact';
@@ -25,6 +26,7 @@ export function DataStreamHandler({ id }: { id: string }) {
   const { data: dataStream } = useChat({ id });
   const { artifact, setArtifact, setMetadata } = useArtifact();
   const lastProcessedIndex = useRef(-1);
+  const router = useRouter();
 
   useEffect(() => {
     if (!dataStream?.length) return;
@@ -52,6 +54,7 @@ export function DataStreamHandler({ id }: { id: string }) {
 
         switch (delta.type) {
           case 'id':
+            router.push(`/dashboard/drafts/${delta.content}`);
             return {
               ...draftArtifact,
               documentId: delta.content as string,

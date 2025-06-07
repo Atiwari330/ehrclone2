@@ -536,3 +536,78 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     );
   }
 }
+
+// Transcript-related queries
+import { transcript } from './schema';
+
+export async function saveTranscript({
+  sessionId,
+  entries,
+  duration,
+  startTime,
+  endTime,
+  wordCount,
+}: {
+  sessionId: string;
+  entries: any;
+  duration: number;
+  startTime: Date;
+  endTime?: Date;
+  wordCount?: number;
+}) {
+  try {
+    const [savedTranscript] = await db
+      .insert(transcript)
+      .values({
+        sessionId,
+        entries,
+        duration,
+        startTime,
+        endTime,
+        wordCount,
+      })
+      .returning();
+
+    return savedTranscript;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to save transcript',
+    );
+  }
+}
+
+export async function getTranscriptBySessionId({ sessionId }: { sessionId: string }) {
+  try {
+    const [sessionTranscript] = await db
+      .select()
+      .from(transcript)
+      .where(eq(transcript.sessionId, sessionId))
+      .orderBy(desc(transcript.createdAt))
+      .limit(1);
+
+    return sessionTranscript;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get transcript by session id',
+    );
+  }
+}
+
+export async function getTranscriptById({ id }: { id: string }) {
+  try {
+    const [selectedTranscript] = await db
+      .select()
+      .from(transcript)
+      .where(eq(transcript.id, id))
+      .limit(1);
+
+    return selectedTranscript;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get transcript by id',
+    );
+  }
+}

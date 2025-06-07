@@ -9,6 +9,7 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -208,3 +209,17 @@ export const session = pgTable('session', {
 });
 
 export type Session = InferSelectModel<typeof session>;
+
+// Transcript table for storing session transcripts
+export const transcript = pgTable('transcript', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  sessionId: uuid('session_id').notNull().references(() => session.id),
+  entries: json('entries').notNull(), // Array of TranscriptEntry objects
+  duration: integer('duration').notNull(), // Duration in seconds
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time'),
+  wordCount: integer('word_count'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type Transcript = InferSelectModel<typeof transcript>;

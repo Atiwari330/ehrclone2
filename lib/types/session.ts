@@ -26,6 +26,8 @@ export interface TranscriptEntry {
   text: string;
   confidence?: number;
   aiProcessed?: boolean;
+  isFinal?: boolean;
+  isPartial?: boolean;
 }
 
 export interface MedicalSession {

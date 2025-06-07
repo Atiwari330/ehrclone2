@@ -2,6 +2,7 @@ import { codeDocumentHandler } from '@/artifacts/code/server';
 import { imageDocumentHandler } from '@/artifacts/image/server';
 import { sheetDocumentHandler } from '@/artifacts/sheet/server';
 import { textDocumentHandler } from '@/artifacts/text/server';
+import { clinicalNoteDocumentHandler } from '@/lib/artifacts/clinical-note';
 import { ArtifactKind } from '@/components/artifact';
 import { DataStreamWriter } from 'ai';
 import { Document } from '../db/schema';
@@ -21,6 +22,7 @@ export interface CreateDocumentCallbackProps {
   title: string;
   dataStream: DataStreamWriter;
   session: Session;
+  sessionId?: string;
 }
 
 export interface UpdateDocumentCallbackProps {
@@ -94,6 +96,13 @@ export const documentHandlersByArtifactKind: Array<DocumentHandler> = [
   codeDocumentHandler,
   imageDocumentHandler,
   sheetDocumentHandler,
+  clinicalNoteDocumentHandler,
 ];
 
-export const artifactKinds = ['text', 'code', 'image', 'sheet'] as const;
+export const artifactKinds = [
+  'text',
+  'code',
+  'image',
+  'sheet',
+  'clinical-note',
+] as const;

@@ -148,7 +148,7 @@ export async function POST(request: Request) {
       execute: (dataStream) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({ selectedChatModel, requestHints }) + '\nIf the user asks to create a "clinical note" for a "session", you must call the `createDocument` tool and set the `kind` parameter to `clinical-note`. You must also extract the session ID from the user\'s message and pass it as the `sessionId` parameter.',
           messages,
           maxSteps: 5,
           experimental_activeTools:

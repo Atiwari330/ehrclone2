@@ -1,58 +1,116 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Check, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Check, ChevronLeft, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock data for development
-const mockTranscript = [
-  { speaker: 'Provider', time: '00:00', text: 'Good morning, how are you feeling today?' },
-  { speaker: 'Patient', time: '00:05', text: 'I\'ve been having some headaches for the past week.' },
-  { speaker: 'Provider', time: '00:10', text: 'Can you describe the headaches? Where do you feel them?' },
-  { speaker: 'Patient', time: '00:15', text: 'They\'re mostly on the right side of my head, and they come and go throughout the day.' },
-  { speaker: 'Provider', time: '00:25', text: 'On a scale of 1 to 10, how would you rate the pain?' },
-  { speaker: 'Patient', time: '00:30', text: 'Usually around a 6 or 7. Sometimes it gets worse when I\'m stressed.' },
-  { speaker: 'Provider', time: '00:38', text: 'Have you noticed any other symptoms with the headaches?' },
-  { speaker: 'Patient', time: '00:45', text: 'Sometimes I feel a bit nauseous, and bright lights bother me.' },
-  { speaker: 'Provider', time: '00:52', text: 'Those sound like migraine symptoms. Let\'s discuss treatment options.' },
-];
+interface ParsedSoapNote {
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+}
 
-const mockDraftNote = {
-  chiefComplaint: 'Headaches for the past week',
-  historyOfPresentIllness: 'Patient reports experiencing headaches for approximately one week. Pain is localized to the right side of the head, intermittent throughout the day. Pain severity rated 6-7/10, exacerbated by stress.',
-  reviewOfSystems: 'Associated symptoms include nausea and photophobia. No fever, vision changes, or neck stiffness reported.',
-  assessment: 'Probable migraine headaches based on unilateral location, moderate to severe intensity, and associated symptoms of nausea and photophobia.',
-  plan: 'Discussed lifestyle modifications including stress management and regular sleep schedule. Prescribed sumatriptan 50mg as needed for acute episodes. Follow-up in 2 weeks to assess response to treatment.',
-};
+function parseSoapNote(content: string): ParsedSoapNote {
+  // Initialize sections
+  const sections: ParsedSoapNote = {
+    subjective: '',
+    objective: '',
+    assessment: '',
+    plan: '',
+  };
 
-// Mapping between transcript sections and note fields
-const transcriptToNoteMapping: Record<string, keyof typeof mockDraftNote> = {
-  'transcript-1': 'chiefComplaint',
-  'transcript-2': 'chiefComplaint',
-  'transcript-3': 'historyOfPresentIllness',
-  'transcript-4': 'historyOfPresentIllness',
-  'transcript-5': 'historyOfPresentIllness',
-  'transcript-6': 'historyOfPresentIllness',
-  'transcript-7': 'reviewOfSystems',
-  'transcript-8': 'reviewOfSystems',
-  'transcript-9': 'assessment',
-};
+  // Split content into lines
+  const lines = content.split('\n');
+  let currentSection = '';
+
+  for (const line of lines) {
+    // Check for section headers
+    if (line.includes('### Subjective') || line.includes('## Subjective')) {
+      currentSection = 'subjective';
+      continue;
+    } else if (line.includes('### Objective') || line.includes('## Objective')) {
+      currentSection = 'objective';
+      continue;
+    } else if (line.includes('### Assessment') || line.includes('## Assessment')) {
+      currentSection = 'assessment';
+      continue;
+    } else if (line.includes('### Plan') || line.includes('## Plan')) {
+      currentSection = 'plan';
+      continue;
+    }
+
+    // Add content to current section
+    if (currentSection && line.trim()) {
+      sections[currentSection as keyof ParsedSoapNote] += line + '\n';
+    }
+  }
+
+  // Trim whitespace from all sections
+  Object.keys(sections).forEach(key => {
+    sections[key as keyof ParsedSoapNote] = sections[key as keyof ParsedSoapNote].trim();
+  });
+
+  return sections;
+}
 
 export default function DraftReviewPage() {
   const params = useParams();
   const router = useRouter();
   const draftId = params.id as string;
   
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [activeNoteField, setActiveNoteField] = useState<keyof typeof mockDraftNote | null>(null);
-  const [noteContent, setNoteContent] = useState(mockDraftNote);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [document, setDocument] = useState<any>(null);
+  const [parsedNote, setParsedNote] = useState<ParsedSoapNote | null>(null);
+  const [noteContent, setNoteContent] = useState<ParsedSoapNote>({
+    subjective: '',
+    objective: '',
+    assessment: '',
+    plan: '',
+  });
   const [wordCount, setWordCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Fetch the document
+  useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/documents/${draftId}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch document');
+        }
+        
+        const data = await response.json();
+        setDocument(data.document);
+        
+        // Parse the SOAP note from the document content
+        const parsed = parseSoapNote(data.document.content);
+        setParsedNote(parsed);
+        setNoteContent(parsed);
+        
+        // Calculate initial word count
+        const text = Object.values(parsed).join(' ');
+        setWordCount(text.split(/\s+/).filter(word => word.length > 0).length);
+        
+      } catch (err) {
+        console.error('Error fetching document:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load document');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDocument();
+  }, [draftId]);
   
   // Calculate word count
   const calculateWordCount = () => {
@@ -60,43 +118,12 @@ export default function DraftReviewPage() {
     return text.split(/\s+/).filter(word => word.length > 0).length;
   };
   
-  const handleNoteChange = (section: keyof typeof noteContent, value: string) => {
+  const handleNoteChange = (section: keyof ParsedSoapNote, value: string) => {
     setNoteContent(prev => ({
       ...prev,
       [section]: value
     }));
     setWordCount(calculateWordCount());
-  };
-  
-  const handleTranscriptClick = (transcriptId: string) => {
-    setActiveSection(transcriptId);
-    // Highlight corresponding note field
-    const noteField = transcriptToNoteMapping[transcriptId];
-    if (noteField) {
-      setActiveNoteField(noteField);
-      // Scroll to the note field
-      const element = document.getElementById(`note-field-${noteField}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  };
-  
-  const handleNoteFieldFocus = (field: keyof typeof noteContent) => {
-    setActiveNoteField(field);
-    // Find and highlight corresponding transcript sections
-    const transcriptIds = Object.entries(transcriptToNoteMapping)
-      .filter(([_, noteField]) => noteField === field)
-      .map(([transcriptId]) => transcriptId);
-    
-    if (transcriptIds.length > 0) {
-      setActiveSection(transcriptIds[0]);
-      // Scroll to first matching transcript
-      const element = document.getElementById(transcriptIds[0]);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
   };
   
   const validateNote = (): string[] => {
@@ -109,22 +136,17 @@ export default function DraftReviewPage() {
     }
     
     // Check required fields
-    if (!noteContent.chiefComplaint.trim()) {
-      errors.push('Chief Complaint is required');
+    if (!noteContent.subjective.trim()) {
+      errors.push('Subjective section is required');
     }
-    if (!noteContent.historyOfPresentIllness.trim()) {
-      errors.push('History of Present Illness is required');
+    if (!noteContent.objective.trim()) {
+      errors.push('Objective section is required');
     }
     if (!noteContent.assessment.trim()) {
       errors.push('Assessment is required');
     }
     if (!noteContent.plan.trim()) {
       errors.push('Plan is required');
-    }
-    
-    // Check minimum length for each section
-    if (noteContent.historyOfPresentIllness.trim().split(' ').length < 20) {
-      errors.push('History of Present Illness should be more detailed (minimum 20 words)');
     }
     
     return errors;
@@ -142,10 +164,10 @@ export default function DraftReviewPage() {
     setValidationErrors([]);
     
     try {
-      // Simulate API call
+      // TODO: Update document in database with edited content
+      // For now, simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // TODO: Actual API call to update note status
       console.log('Submitting note for review:', noteContent);
       
       // Show success message
@@ -162,6 +184,33 @@ export default function DraftReviewPage() {
     }
   };
   
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
+  if (error || !document) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center space-x-2 text-red-600 mb-4">
+            <AlertCircle className="h-5 w-5" />
+            <p>{error || 'Document not found'}</p>
+          </div>
+          <Link href="/dashboard/drafts">
+            <Button variant="outline">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to Drafts
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col">
       {/* Header */}
@@ -174,8 +223,10 @@ export default function DraftReviewPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-semibold">Draft Review</h1>
-            <p className="text-sm text-muted-foreground">Session from {new Date().toLocaleDateString()}</p>
+            <h1 className="text-xl font-semibold">{document.title || 'Clinical Note'}</h1>
+            <p className="text-sm text-muted-foreground">
+              Created on {new Date(document.createdAt).toLocaleDateString()} at {new Date(document.createdAt).toLocaleTimeString()}
+            </p>
           </div>
         </div>
         
@@ -233,132 +284,82 @@ export default function DraftReviewPage() {
         </div>
       )}
       
-      {/* Two-pane layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left pane - Transcript */}
-        <div className="w-1/2 border-r flex flex-col">
-          <div className="p-4 border-b">
-            <h2 className="font-semibold">Session Transcript</h2>
+      {/* Note editor */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Subjective */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Subjective</label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Document the patient's chief complaint and history of present illness
+            </p>
+            <textarea
+              className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={6}
+              value={noteContent.subjective}
+              onChange={(e) => handleNoteChange('subjective', e.target.value)}
+              placeholder="Patient's self-reported symptoms, feelings, and concerns..."
+            />
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {mockTranscript.map((entry, index) => (
-              <div
-                key={index}
-                id={`transcript-${index}`}
-                className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeSection === `transcript-${index}` 
-                    ? 'bg-primary/10 border border-primary/20' 
-                    : 'hover:bg-muted'
-                }`}
-                onClick={() => handleTranscriptClick(`transcript-${index}`)}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium">{entry.speaker}</span>
-                  <span className="text-xs text-muted-foreground">{entry.time}</span>
-                </div>
-                <p className="text-sm">{entry.text}</p>
-              </div>
-            ))}
+          
+          {/* Objective */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Objective</label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Provider's observations of the patient during the session
+            </p>
+            <textarea
+              className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={4}
+              value={noteContent.objective}
+              onChange={(e) => handleNoteChange('objective', e.target.value)}
+              placeholder="Mental status exam, observed behaviors, appearance..."
+            />
           </div>
-        </div>
-        
-        {/* Right pane - Note Editor */}
-        <div className="w-1/2 flex flex-col">
-          <div className="p-4 border-b">
-            <h2 className="font-semibold">Medical Note</h2>
+          
+          {/* Assessment */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Assessment</label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Clinical assessment and diagnoses
+            </p>
+            <textarea
+              className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={4}
+              value={noteContent.assessment}
+              onChange={(e) => handleNoteChange('assessment', e.target.value)}
+              placeholder="Summary of key themes, clinical status, diagnoses..."
+            />
           </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-6">
-              {/* Chief Complaint */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Chief Complaint</label>
-                <textarea
-                  id="note-field-chiefComplaint"
-                  className={`w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-                    activeNoteField === 'chiefComplaint' ? 'ring-2 ring-primary bg-primary/5' : ''
-                  }`}
-                  rows={2}
-                  value={noteContent.chiefComplaint}
-                  onChange={(e) => handleNoteChange('chiefComplaint', e.target.value)}
-                  onFocus={() => handleNoteFieldFocus('chiefComplaint')}
-                />
-              </div>
-              
-              {/* History of Present Illness */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">History of Present Illness</label>
-                <textarea
-                  id="note-field-historyOfPresentIllness"
-                  className={`w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-                    activeNoteField === 'historyOfPresentIllness' ? 'ring-2 ring-primary bg-primary/5' : ''
-                  }`}
-                  rows={4}
-                  value={noteContent.historyOfPresentIllness}
-                  onChange={(e) => handleNoteChange('historyOfPresentIllness', e.target.value)}
-                  onFocus={() => handleNoteFieldFocus('historyOfPresentIllness')}
-                />
-              </div>
-              
-              {/* Review of Systems */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Review of Systems</label>
-                <textarea
-                  id="note-field-reviewOfSystems"
-                  className={`w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-                    activeNoteField === 'reviewOfSystems' ? 'ring-2 ring-primary bg-primary/5' : ''
-                  }`}
-                  rows={3}
-                  value={noteContent.reviewOfSystems}
-                  onChange={(e) => handleNoteChange('reviewOfSystems', e.target.value)}
-                  onFocus={() => handleNoteFieldFocus('reviewOfSystems')}
-                />
-              </div>
-              
-              {/* Assessment */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Assessment</label>
-                <textarea
-                  id="note-field-assessment"
-                  className={`w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-                    activeNoteField === 'assessment' ? 'ring-2 ring-primary bg-primary/5' : ''
-                  }`}
-                  rows={3}
-                  value={noteContent.assessment}
-                  onChange={(e) => handleNoteChange('assessment', e.target.value)}
-                  onFocus={() => handleNoteFieldFocus('assessment')}
-                />
-              </div>
-              
-              {/* Plan */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Plan</label>
-                <textarea
-                  id="note-field-plan"
-                  className={`w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
-                    activeNoteField === 'plan' ? 'ring-2 ring-primary bg-primary/5' : ''
-                  }`}
-                  rows={4}
-                  value={noteContent.plan}
-                  onChange={(e) => handleNoteChange('plan', e.target.value)}
-                  onFocus={() => handleNoteFieldFocus('plan')}
-                />
-              </div>
-              
-              {/* Compliance indicator */}
-              <div className="border-t pt-4 mt-6">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Compliance Status</span>
-                  {calculateWordCount() >= 100 && 
-                   noteContent.chiefComplaint.trim() && 
-                   noteContent.historyOfPresentIllness.trim() && 
-                   noteContent.assessment.trim() && 
-                   noteContent.plan.trim() ? (
-                    <span className="text-green-600 font-medium">✓ Meets requirements</span>
-                  ) : (
-                    <span className="text-yellow-600 font-medium">⚠ Missing required information</span>
-                  )}
-                </div>
-              </div>
+          
+          {/* Plan */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Plan</label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Treatment plan and next steps
+            </p>
+            <textarea
+              className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={5}
+              value={noteContent.plan}
+              onChange={(e) => handleNoteChange('plan', e.target.value)}
+              placeholder="Medications, interventions, referrals, follow-up schedule..."
+            />
+          </div>
+          
+          {/* Compliance indicator */}
+          <div className="border-t pt-4 mt-6">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Compliance Status</span>
+              {calculateWordCount() >= 100 && 
+               noteContent.subjective.trim() && 
+               noteContent.objective.trim() && 
+               noteContent.assessment.trim() && 
+               noteContent.plan.trim() ? (
+                <span className="text-green-600 font-medium">✓ Meets requirements</span>
+              ) : (
+                <span className="text-yellow-600 font-medium">⚠ Missing required information</span>
+              )}
             </div>
           </div>
         </div>
