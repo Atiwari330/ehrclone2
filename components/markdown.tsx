@@ -29,8 +29,8 @@ const components: Partial<Components> = {
         }
         
         // Check children recursively
-        if (element.props?.children) {
-          const childrenArray = React.Children.toArray(element.props.children);
+        if (element.props && 'children' in (element.props as any)) {
+          const childrenArray = React.Children.toArray((element.props as any).children);
           return childrenArray.some((child) => hasCodeBlock(child));
         }
       }

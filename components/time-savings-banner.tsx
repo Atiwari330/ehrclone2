@@ -40,7 +40,7 @@ export function TimeSavingsBanner({ weeklySavedMinutes }: TimeSavingsBannerProps
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium opacity-90">
-              You're saving
+              You&apos;re saving
             </p>
             <p className="text-3xl font-bold">
               {hours > 0 && `${hours} h `}{minutes} m

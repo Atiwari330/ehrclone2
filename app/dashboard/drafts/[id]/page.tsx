@@ -291,7 +291,7 @@ export default function DraftReviewPage() {
           <div>
             <label className="text-sm font-medium mb-2 block">Subjective</label>
             <p className="text-xs text-muted-foreground mb-2">
-              Document the patient's chief complaint and history of present illness
+              Document the patient&apos;s chief complaint and history of present illness
             </p>
             <textarea
               className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
@@ -306,7 +306,7 @@ export default function DraftReviewPage() {
           <div>
             <label className="text-sm font-medium mb-2 block">Objective</label>
             <p className="text-xs text-muted-foreground mb-2">
-              Provider's observations of the patient during the session
+              Provider&apos;s observations of the patient during the session
             </p>
             <textarea
               className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
