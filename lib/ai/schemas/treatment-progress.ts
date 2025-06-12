@@ -34,7 +34,7 @@ export const goalProgressSchema = z.object({
 export const progressIndicatorSchema = z.object({
   indicator: z.string(),
   type: z.enum(['improvement', 'maintenance', 'regression']),
-  domain: z.enum(['symptoms', 'functioning', 'relationships', 'quality_of_life', 'treatment_engagement']),
+  domain: z.enum(['symptoms', 'functioning', 'relationships', 'quality_of_life', 'treatment_engagement', 'cognitive']),
   magnitude: z.enum(['minimal', 'moderate', 'significant']),
   timeframe: z.string().describe('Timeframe of observed change'),
   supportingData: z.array(z.string()),

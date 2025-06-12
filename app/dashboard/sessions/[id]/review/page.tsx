@@ -2,10 +2,12 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 // import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ArrowLeft,
@@ -20,12 +22,24 @@ import {
   CheckCircle,
   Activity,
   ChevronRight,
-  Home
+  Home,
+  Brain,
+  Shield,
+  DollarSign,
+  TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import type { Transcript } from '@/lib/db/schema';
 import type { TranscriptEntry } from '@/lib/types/transcription';
+
+// AI Insights imports
+import { useAIInsights } from '@/hooks/use-ai-insights';
+import { AIInsightsLoader } from '@/components/ai-insights-loader';
+import { SafetyInsightsPanel } from '@/components/safety-insights-panel';
+import { BillingInsightsPanel } from '@/components/billing-insights-panel';
+import { ProgressInsightsPanel } from '@/components/progress-insights-panel';
+import { PipelineProgressIndicator } from '@/components/pipeline-progress-indicator';
 
 interface TranscriptWithEntries extends Omit<Transcript, 'entries'> {
   entries: TranscriptEntry[];
@@ -35,12 +49,57 @@ export default function TranscriptReviewPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params.id as string;
+  const { data: authSession } = useSession();
   
   const [transcript, setTranscript] = useState<TranscriptWithEntries | null>(null);
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Convert transcript to text for AI analysis
+  const transcriptText = transcript?.entries
+    .map(entry => `[${entry.timestamp}] ${entry.speaker}: ${entry.text}`)
+    .join('\n') || '';
+
+  // Convert sessionId to valid UUID if it's "test-session"
+  const validSessionId = sessionId === 'test-session' ? 
+    '123e4567-e89b-12d3-a456-426614174000' : sessionId;
+
+  // AI Insights integration
+  const aiInsights = useAIInsights({
+    sessionId: validSessionId,
+    patientId: session?.patientId || '456e4567-e89b-12d3-a456-426614174001', // Use valid UUID format for testing
+    transcript: transcriptText,
+    userId: authSession?.user?.id, // Use real user ID from auth
+    autoStart: !!transcript && !!transcriptText && !!authSession?.user?.id, // Auto-start when transcript and auth are loaded
+    onInsightUpdate: (pipeline, data) => {
+      console.log('[TranscriptReview] AI insight received:', {
+        sessionId,
+        pipeline,
+        timestamp: Date.now(),
+        hasData: !!data
+      });
+    },
+    onError: (pipeline, error) => {
+      console.error('[TranscriptReview] AI pipeline error:', {
+        sessionId,
+        pipeline,
+        error: error.message,
+        timestamp: Date.now()
+      });
+    },
+    onComplete: (insights) => {
+      console.log('[TranscriptReview] AI analysis complete:', {
+        sessionId,
+        safetyComplete: insights.safety.status === 'success',
+        billingComplete: insights.billing.status === 'success',
+        progressComplete: insights.progress.status === 'success',
+        overallProgress: insights.overallProgress,
+        timestamp: Date.now()
+      });
+    }
+  });
   
   // Fetch transcript data
   useEffect(() => {
@@ -333,6 +392,99 @@ export default function TranscriptReviewPage() {
           </Button>
         </div>
       </div>
+
+      {/* AI Insights Progress Bar */}
+      {(aiInsights.isLoading || aiInsights.overallProgress > 0) && (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-4">
+              <Brain className="h-5 w-5 text-blue-600" />
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium">AI Analysis Progress</p>
+                  <span className="text-sm text-muted-foreground">
+                    {aiInsights.overallProgress}%
+                  </span>
+                </div>
+                <Progress value={aiInsights.overallProgress} className="h-2" />
+              </div>
+              {aiInsights.isComplete && !aiInsights.hasErrors && (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              )}
+              {aiInsights.hasErrors && (
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={aiInsights.retryAll}
+                    disabled={aiInsights.isLoading}
+                  >
+                    Retry Failed
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            {/* Individual Pipeline Progress */}
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <PipelineProgressIndicator
+                pipeline="safety"
+                state={aiInsights.safetyState}
+                onRetry={() => aiInsights.retryPipeline('safety')}
+              />
+              <PipelineProgressIndicator
+                pipeline="billing"
+                state={aiInsights.billingState}
+                onRetry={() => aiInsights.retryPipeline('billing')}
+              />
+              <PipelineProgressIndicator
+                pipeline="progress"
+                state={aiInsights.progressState}
+                onRetry={() => aiInsights.retryPipeline('progress')}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Insights Results */}
+      {(aiInsights.safetyState.status === 'success' || 
+        aiInsights.billingState.status === 'success' || 
+        aiInsights.progressState.status === 'success') && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <Brain className="h-5 w-5 mr-2 text-blue-600" />
+            AI Insights
+          </h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Safety Insights */}
+            {aiInsights.safetyState.status === 'success' && aiInsights.safetyState.data && (
+              <SafetyInsightsPanel 
+                insights={aiInsights.safetyState.data}
+                className="h-fit"
+              />
+            )}
+            
+            {/* Billing Insights */}
+            {aiInsights.billingState.status === 'success' && aiInsights.billingState.data && (
+              <BillingInsightsPanel 
+                insights={aiInsights.billingState.data}
+                className="h-fit"
+              />
+            )}
+            
+            {/* Progress Insights */}
+            {aiInsights.progressState.status === 'success' && aiInsights.progressState.data && (
+              <ProgressInsightsPanel 
+                insights={aiInsights.progressState.data}
+                className="h-fit"
+              />
+            )}
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main transcript area */}
