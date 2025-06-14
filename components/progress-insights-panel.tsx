@@ -51,32 +51,10 @@ export function ProgressInsightsPanel({
   onViewDetails,
   className
 }: ProgressInsightsPanelProps) {
-  console.log('[ProgressInsightsPanel] Rendering:', {
-    hasInsights: !!insights,
-    isLoading,
-    hasError: !!error,
-    goalCount: insights?.goalProgress?.length || 0,
-    overallRating: insights?.overallTreatmentEffectiveness?.rating,
-    trends: insights?.overallTreatmentEffectiveness?.trends,
-    timestamp: Date.now()
-  });
-
-  if (isLoading) {
-    return <ProgressInsightsLoading className={className} />;
-  }
-
-  if (error) {
-    return <ProgressInsightsError error={error} className={className} />;
-  }
-
-  if (!insights) {
-    return <ProgressInsightsEmpty className={className} />;
-  }
-
-  const { goalProgress, overallTreatmentEffectiveness: rawEffectiveness, recommendations, sessionQuality, confidence } = insights;
-
   // Handle API data structure mismatch - convert string to expected object structure
   const overallTreatmentEffectiveness = React.useMemo(() => {
+    const rawEffectiveness = insights?.overallTreatmentEffectiveness;
+    
     if (!rawEffectiveness) {
       return {
         rating: 5,
@@ -114,7 +92,31 @@ export function ProgressInsightsPanel({
       trends: 'stable' as const,
       keyIndicators: []
     };
-  }, [rawEffectiveness]);
+  }, [insights?.overallTreatmentEffectiveness]);
+
+  console.log('[ProgressInsightsPanel] Rendering:', {
+    hasInsights: !!insights,
+    isLoading,
+    hasError: !!error,
+    goalCount: insights?.goalProgress?.length || 0,
+    overallRating: overallTreatmentEffectiveness?.rating,
+    trends: overallTreatmentEffectiveness?.trends,
+    timestamp: Date.now()
+  });
+
+  if (isLoading) {
+    return <ProgressInsightsLoading className={className} />;
+  }
+
+  if (error) {
+    return <ProgressInsightsError error={error} className={className} />;
+  }
+
+  if (!insights) {
+    return <ProgressInsightsEmpty className={className} />;
+  }
+
+  const { goalProgress, recommendations, sessionQuality, confidence } = insights;
 
   return (
     <Card className={cn("", className)}>
@@ -592,7 +594,7 @@ function RecommendationsSection({
             <div className="space-y-1">
               {treatmentAdjustments.map((adjustment, idx) => (
                 <div key={idx} className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  {adjustment}
+                  {typeof adjustment === 'string' ? adjustment : (adjustment as any).target || (adjustment as any).rationale || 'Treatment adjustment'}
                 </div>
               ))}
             </div>
@@ -609,7 +611,7 @@ function RecommendationsSection({
             <div className="space-y-1">
               {newGoals.map((goal, idx) => (
                 <div key={idx} className="text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200">
-                  {goal}
+                  {typeof goal === 'string' ? goal : (goal as any).target || (goal as any).rationale || 'New goal'}
                 </div>
               ))}
             </div>
@@ -626,7 +628,7 @@ function RecommendationsSection({
             <div className="space-y-1">
               {interventions.map((intervention, idx) => (
                 <div key={idx} className="text-xs text-purple-700 bg-purple-50 p-2 rounded border border-purple-200">
-                  {intervention}
+                  {typeof intervention === 'string' ? intervention : (intervention as any).target || (intervention as any).rationale || 'Intervention'}
                 </div>
               ))}
             </div>

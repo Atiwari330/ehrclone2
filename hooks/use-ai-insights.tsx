@@ -31,6 +31,72 @@ import {
 // Pipeline key type for type safety
 type PipelineKey = 'safety' | 'billing' | 'progress';
 
+// Transform API response to match expected TypeScript structure
+function transformApiResponseToInsights(pipeline: PipelineKey, apiData: any): any {
+  if (!apiData) return null;
+
+  switch (pipeline) {
+    case 'safety':
+      return {
+        riskAssessment: apiData.riskAssessment || {
+          overallRisk: apiData.riskIndicators?.severity || 'low',
+          riskScore: apiData.riskIndicators?.score || 0,
+          riskFactors: apiData.riskIndicators?.factors || [],
+          protectiveFactors: apiData.protectiveFactors || []
+        },
+        alerts: apiData.alerts || [],
+        recommendations: apiData.recommendations || {
+          immediate: [],
+          shortTerm: [],
+          longTerm: []
+        },
+        confidence: apiData.confidence?.score || apiData.confidence || 0
+      };
+
+    case 'billing':
+      // Transform flat API response to nested structure expected by SmartActionsEngine
+      return {
+        cptCodes: apiData.cptCodes || [],
+        icd10Codes: apiData.icd10Codes || [],
+        sessionType: apiData.sessionInfo || {
+          detected: apiData.sessionType || 'Unknown',
+          confidence: apiData.confidence?.score || 0,
+          duration: apiData.duration || 0
+        },
+        billingOptimization: {
+          suggestedAdjustments: apiData.suggestedAdjustments || [],
+          complianceIssues: apiData.compliance?.issues || [],
+          revenueOpportunities: apiData.revenueOpportunities || []
+        },
+        confidence: apiData.confidence?.score || apiData.confidence || 0
+      };
+
+    case 'progress':
+      return {
+        goalProgress: apiData.goalProgress || [],
+        overallTreatmentEffectiveness: apiData.effectiveness || {
+          rating: apiData.effectiveness?.overallEffectiveness || 5,
+          trends: apiData.progressIndicators?.trend || 'stable',
+          keyIndicators: apiData.progressIndicators?.keyIndicators || []
+        },
+        recommendations: {
+          treatmentAdjustments: apiData.treatmentAdjustments || apiData.recommendations?.treatmentAdjustments || [],
+          newGoals: apiData.recommendations?.newGoals || [],
+          interventions: apiData.recommendations?.interventions || []
+        },
+        sessionQuality: apiData.clinicalOutcomes || {
+          engagement: apiData.clinicalOutcomes?.patientEngagement || 5,
+          therapeuticRapport: apiData.clinicalOutcomes?.therapeuticAlliance || 5,
+          progressTowardGoals: apiData.clinicalOutcomes?.progressMade || 5
+        },
+        confidence: apiData.confidence?.score || apiData.confidence || 0
+      };
+
+    default:
+      return apiData;
+  }
+}
+
 // Hook options interface
 export interface UseAIInsightsOptions {
   sessionId: string;
@@ -218,14 +284,25 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
       retryAttempt
     });
 
-    console.log('[AIInsights] Starting pipeline execution:', {
-      sessionId,
-      pipeline: pipelineType,
-      retryAttempt,
-      requestId,
-      transcriptLength: transcript.length,
-      timestamp: startTime
-    });
+      console.log('[AIInsights] Starting pipeline execution:', {
+        sessionId,
+        pipeline: pipelineType,
+        retryAttempt,
+        requestId,
+        transcriptLength: transcript.length,
+        timestamp: startTime
+      });
+
+      // Network request tracking - Before API call
+      console.log('[AIInsights] NETWORK REQUEST START:', {
+        sessionId,
+        pipeline: pipelineType,
+        endpoint: `/api/pipelines/${pipelineType === 'progress' ? 'progress' : 
+                     pipelineType === 'billing' ? 'billing' : 'safety-check'}`,
+        requestId,
+        retryAttempt,
+        timestamp: startTime
+      });
 
     try {
       // Update to loading state
@@ -276,6 +353,18 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
       // Update progress
       updatePipelineState(pipelineType, { progress: 90 });
 
+      // Enhanced logging to diagnose data structure
+      console.log('[AIInsights] Pipeline API response structure:', {
+        sessionId,
+        pipeline: pipelineType,
+        hasResult: !!result,
+        hasData: !!result.data,
+        hasAnalysis: !!result.data?.analysis,
+        dataKeys: result.data ? Object.keys(result.data) : [],
+        analysisKeys: result.data?.analysis ? Object.keys(result.data.analysis) : [],
+        requestId
+      });
+
       console.log('[AIInsights] Pipeline completed successfully:', {
         sessionId,
         pipeline: pipelineType,
@@ -299,11 +388,16 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
         }
       }));
 
-      // Complete pipeline
+      // Complete pipeline - handle both nested and non-nested response structures
+      const analysisData = result.data?.analysis || result.data;
+      
+      // Transform API response to match expected TypeScript structure
+      const transformedData = transformApiResponseToInsights(pipelineType, analysisData);
+      
       updatePipelineState(pipelineType, {
         status: 'success',
         progress: 100,
-        data: result.data?.analysis,
+        data: transformedData,
         endTime,
         metadata: result.data?.metadata
       });

@@ -221,7 +221,14 @@ export class AIInsightsOrchestrator {
             progress: result.success ? 100 : 0,
             data: result.data?.analysis,
             error: result.error ? new Error(result.error) : undefined,
-            metadata: result.data?.metadata,
+            metadata: result.data?.metadata ? {
+              ...result.data.metadata,
+              executionTime: result.executionTime,
+              timestamp: new Date().toISOString(),
+              executionId: result.data.metadata.executionId || executionId,
+              modelUsed: result.data.metadata.modelUsed || 'unknown',
+              cacheHit: result.data.metadata.cacheHit ?? false
+            } : undefined,
             timestamp: Date.now()
           });
 
@@ -553,7 +560,14 @@ export class AIInsightsOrchestrator {
           progress: pipelineResult.success ? 100 : 0,
           startTime: overallStartTime,
           endTime: now,
-          metadata: pipelineResult.data?.metadata
+          metadata: pipelineResult.data?.metadata ? {
+            ...pipelineResult.data.metadata,
+            executionTime: pipelineResult.executionTime,
+            timestamp: new Date().toISOString(),
+            executionId: pipelineResult.data.metadata.executionId || `processed-${Date.now()}`,
+            modelUsed: pipelineResult.data.metadata.modelUsed || 'unknown',
+            cacheHit: pipelineResult.data.metadata.cacheHit ?? false
+          } : undefined
         };
       } else {
         finalState[pipelineType] = {
