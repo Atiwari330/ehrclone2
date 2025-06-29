@@ -238,13 +238,6 @@ export function StickyHeader({
           </div>
         )}
       </header>
-
-      {/* Spacer to prevent content jump */}
-      <div 
-        style={{ height: headerHeight }} 
-        className="shrink-0"
-        aria-hidden="true"
-      />
     </>
   );
 }

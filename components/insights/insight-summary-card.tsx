@@ -22,6 +22,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getSeverityToken, designSystem } from '@/lib/design-tokens';
+import { useAnimationConfig } from '@/hooks/use-reduced-motion';
 
 export interface InsightSummaryCardProps {
   // Core content
@@ -88,6 +90,9 @@ export function InsightSummaryCard({
   'aria-describedby': ariaDescribedBy,
   ...props
 }: InsightSummaryCardProps) {
+  // Animation configuration respecting user preferences
+  const animationConfig = useAnimationConfig();
+  
   // Internal state for expansion when not controlled
   const [internalExpanded, setInternalExpanded] = React.useState(defaultExpanded);
   
@@ -148,41 +153,23 @@ export function InsightSummaryCard({
     }
   }, [cardId, title, severity, onCardClick]);
 
-  // Get severity styling
+  // Get severity styling using design tokens
   const getSeverityStyles = React.useCallback((severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return {
-          cardClass: 'bg-red-50/50 border-red-200/50 shadow-sm',
-          iconColor: 'text-red-500',
-          badgeClass: 'bg-red-100 text-red-800 border-red-300'
-        };
-      case 'high':
-        return {
-          cardClass: 'bg-orange-50/50 border-orange-200/50 shadow-sm',
-          iconColor: 'text-orange-500',
-          badgeClass: 'bg-orange-100 text-orange-800 border-orange-300'
-        };
-      case 'medium':
-        return {
-          cardClass: 'bg-yellow-50/50 border-yellow-200/50 shadow-sm',
-          iconColor: 'text-yellow-500',
-          badgeClass: 'bg-yellow-100 text-yellow-800 border-yellow-300'
-        };
-      case 'low':
-        return {
-          cardClass: 'bg-blue-50/50 border-blue-200/50 shadow-sm',
-          iconColor: 'text-blue-500',
-          badgeClass: 'bg-blue-100 text-blue-800 border-blue-300'
-        };
-      default: // info
-        return {
-          cardClass: 'bg-gray-50/50 border-gray-200/50 shadow-sm',
-          iconColor: 'text-gray-500',
-          badgeClass: 'bg-gray-100 text-gray-800 border-gray-300'
-        };
-    }
-  }, []);
+    const token = getSeverityToken(severity as 'critical' | 'high' | 'medium' | 'low' | 'info');
+    
+    console.log('[InsightSummaryCard] Using design token for severity:', {
+      cardId,
+      severity,
+      tokenClasses: token.classes,
+      timestamp: Date.now()
+    });
+    
+    return {
+      cardClass: token.classes.card,
+      iconColor: token.classes.icon,
+      badgeClass: token.classes.badge
+    };
+  }, [cardId]);
 
   // Get default icon for severity
   const getDefaultIcon = React.useCallback((severity: string) => {
@@ -260,8 +247,8 @@ export function InsightSummaryCard({
     >
       {/* Card Header - Always Visible */}
       <div className={cn(
-        'p-3',
-        variant === 'compact' && 'p-2'
+        designSystem.spacing.card,
+        variant === 'compact' && designSystem.spacing.cardCompact
       )}>
         <div className="flex items-start justify-between mb-2">
           {/* Left side: Icon, Title, Badges */}
@@ -353,36 +340,52 @@ export function InsightSummaryCard({
       </div>
 
       {/* Expanded Content - Animated */}
-      <AnimatePresence>
-        {isExpanded && children && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ 
-              duration: 0.2, 
-              ease: 'easeInOut',
-              height: { duration: 0.3 }
-            }}
-            className="overflow-hidden"
-            onAnimationStart={() => {
-              console.log('[InsightSummaryCard] Animation started:', {
-                cardId,
-                title,
-                action: isExpanded ? 'expanding' : 'collapsing',
-                timestamp: Date.now()
-              });
-            }}
-            onAnimationComplete={() => {
-              console.log('[InsightSummaryCard] Animation completed:', {
-                cardId,
-                title,
-                action: isExpanded ? 'expanded' : 'collapsed',
-                timestamp: Date.now()
-              });
-            }}
-          >
-            <div className="border-t px-3 pb-3 pt-2">
+      {animationConfig.enabled ? (
+        <AnimatePresence>
+          {isExpanded && children && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, willChange: 'height, opacity' }}
+              animate={{ height: 'auto', opacity: 1, willChange: 'auto' }}
+              exit={{ height: 0, opacity: 0, willChange: 'height, opacity' }}
+              transition={animationConfig.cardTransition}
+              className="overflow-hidden"
+              onAnimationStart={() => {
+                console.log('[InsightSummaryCard] Animation started:', {
+                  cardId,
+                  title,
+                  action: isExpanded ? 'expanding' : 'collapsing',
+                  duration: animationConfig.cardTransition.duration,
+                  animationsEnabled: animationConfig.enabled,
+                  timestamp: Date.now()
+                });
+              }}
+              onAnimationComplete={() => {
+                console.log('[InsightSummaryCard] Animation completed:', {
+                  cardId,
+                  title,
+                  action: isExpanded ? 'expanded' : 'collapsed',
+                  timestamp: Date.now()
+                });
+              }}
+            >
+              <div className={cn("border-t", designSystem.spacing.cardContent)}>
+                {children}
+                
+                {/* Actions */}
+                {actions && (
+                  <div className="mt-3 pt-2 border-t">
+                    {actions}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : (
+        // Static expanded content when animations are disabled
+        isExpanded && children && (
+          <div className="overflow-hidden">
+            <div className={cn("border-t", designSystem.spacing.cardContent)}>
               {children}
               
               {/* Actions */}
@@ -392,9 +395,9 @@ export function InsightSummaryCard({
                 </div>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        )
+      )}
     </div>
   );
 }

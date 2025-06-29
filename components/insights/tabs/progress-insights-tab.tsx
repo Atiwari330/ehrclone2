@@ -218,10 +218,10 @@ export function ProgressInsightsTab({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Star className="h-4 w-4 text-yellow-500" />
-                <h3 className="font-medium">Treatment Effectiveness</h3>
+                  <h3 className="text-base font-medium">Treatment Effectiveness</h3>
               </div>
               <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-sm text-muted-foreground">
                   {Math.round(confidence * 100)}% confidence
                 </Badge>
                 <EffectivenessBadge rating={overallTreatmentEffectiveness.rating} />
@@ -258,7 +258,7 @@ export function ProgressInsightsTab({
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4 text-purple-500" />
-                <h3 className="font-medium">Session Quality</h3>
+                  <h3 className="text-base font-medium">Session Quality</h3>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
@@ -295,7 +295,7 @@ export function ProgressInsightsTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Target className="h-4 w-4 text-green-500" />
-                  <h3 className="font-medium">Active Goals</h3>
+                  <h3 className="text-base font-medium">Active Goals</h3>
                   <Badge variant="default" className="text-xs">
                     {activeGoals.length}
                   </Badge>
@@ -371,7 +371,7 @@ export function ProgressInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="font-medium">Achieved Goals</span>
+                  <span className="text-base font-medium">Achieved Goals</span>
                   <Badge variant="outline" className="text-xs">
                     {achievedGoals.length}
                   </Badge>
@@ -433,7 +433,7 @@ export function ProgressInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">Key Indicators</span>
+                  <span className="text-base font-medium">Key Indicators</span>
                   <Badge variant="outline" className="text-xs">
                     {overallTreatmentEffectiveness.keyIndicators.length}
                   </Badge>
@@ -469,7 +469,7 @@ export function ProgressInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <ArrowRight className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">Recommendations</span>
+                  <span className="text-base font-medium">Recommendations</span>
                   <Badge variant="outline" className="text-xs">
                     {(recommendations.treatmentAdjustments?.length || 0) + 
                      (recommendations.newGoals?.length || 0) + 
@@ -503,7 +503,7 @@ export function ProgressInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">Other Goals</span>
+                  <span className="text-base font-medium">Other Goals</span>
                   <Badge variant="outline" className="text-xs">
                     {otherGoals.length}
                   </Badge>
@@ -936,7 +936,7 @@ function ProgressSummarySection({
   return (
     <div className="space-y-3 pt-4 border-t">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">Summary</h3>
+        <h3 className="text-base font-medium">Summary</h3>
         {onAddGoal && (
           <Button 
             variant="outline" 

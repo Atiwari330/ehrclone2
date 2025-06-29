@@ -194,14 +194,24 @@ export class SmartActionsEngine {
   private generateSafetyActions(safetyInsights: SafetyInsights): SmartAction[] {
     const actions: SmartAction[] = [];
 
+    // Add defensive checks for all properties
+    const alerts = safetyInsights.alerts || [];
+    const riskAssessment = safetyInsights.riskAssessment || {
+      overallRisk: 'low' as const,
+      riskScore: 0,
+      riskFactors: [],
+      protectiveFactors: []
+    };
+
     console.log('[SmartActions] Processing safety insights:', {
-      alertCount: safetyInsights.alerts.length,
-      overallRisk: safetyInsights.riskAssessment.overallRisk,
-      riskScore: safetyInsights.riskAssessment.riskScore
+      alertCount: alerts.length,
+      overallRisk: riskAssessment.overallRisk,
+      riskScore: riskAssessment.riskScore,
+      hasRiskAssessment: !!safetyInsights.riskAssessment
     });
 
     // Process critical and high severity alerts
-    const urgentAlerts = safetyInsights.alerts.filter(
+    const urgentAlerts = alerts.filter(
       alert => alert.severity === 'critical' || alert.severity === 'high'
     );
 
@@ -230,7 +240,7 @@ export class SmartActionsEngine {
     }
 
     // Add general safety follow-up if needed
-    if (safetyInsights.riskAssessment.riskScore >= 70) {
+    if (riskAssessment.riskScore >= 70) {
       actions.push(this.createSafetyFollowUpAction(safetyInsights));
     }
 
@@ -243,16 +253,26 @@ export class SmartActionsEngine {
   private generateBillingActions(billingInsights: BillingInsights): SmartAction[] {
     const actions: SmartAction[] = [];
 
+    // Add defensive checks for all properties
+    const cptCodes = billingInsights.cptCodes || [];
+    const icd10Codes = billingInsights.icd10Codes || [];
+    const billingOptimization = billingInsights.billingOptimization || {
+      suggestedAdjustments: [],
+      complianceIssues: [],
+      revenueOpportunities: []
+    };
+
     console.log('[SmartActions] Processing billing insights:', {
-      cptCount: billingInsights.cptCodes.length,
-      icdCount: billingInsights.icd10Codes.length,
-      complianceIssues: billingInsights.billingOptimization.complianceIssues.length
+      cptCount: cptCodes.length,
+      icdCount: icd10Codes.length,
+      complianceIssues: billingOptimization.complianceIssues.length,
+      hasBillingOptimization: !!billingInsights.billingOptimization
     });
 
     // High-confidence billing codes for approval
     const highConfidenceCodes = [
-      ...billingInsights.cptCodes,
-      ...billingInsights.icd10Codes
+      ...cptCodes,
+      ...icd10Codes
     ].filter(code => code.confidence >= CONFIDENCE_THRESHOLDS.high);
 
     if (highConfidenceCodes.length > 0) {
@@ -261,8 +281,8 @@ export class SmartActionsEngine {
 
     // Medium-confidence codes for review
     const mediumConfidenceCodes = [
-      ...billingInsights.cptCodes,
-      ...billingInsights.icd10Codes
+      ...cptCodes,
+      ...icd10Codes
     ].filter(
       code => code.confidence >= CONFIDENCE_THRESHOLDS.medium && 
               code.confidence < CONFIDENCE_THRESHOLDS.high
@@ -273,13 +293,13 @@ export class SmartActionsEngine {
     }
 
     // Compliance issues
-    if (billingInsights.billingOptimization?.complianceIssues?.length > 0) {
-      actions.push(this.createComplianceAction(billingInsights.billingOptimization));
+    if (billingOptimization.complianceIssues && billingOptimization.complianceIssues.length > 0) {
+      actions.push(this.createComplianceAction(billingOptimization));
     }
 
     // Revenue opportunities
-    if (billingInsights.billingOptimization?.revenueOpportunities?.length > 0) {
-      actions.push(this.createRevenueOptimizationAction(billingInsights.billingOptimization));
+    if (billingOptimization.revenueOpportunities && billingOptimization.revenueOpportunities.length > 0) {
+      actions.push(this.createRevenueOptimizationAction(billingOptimization));
     }
 
     return actions.slice(0, this.config.maxActionsPerType);
@@ -291,33 +311,52 @@ export class SmartActionsEngine {
   private generateProgressActions(progressInsights: ProgressInsights): SmartAction[] {
     const actions: SmartAction[] = [];
 
+    // Add defensive checks for all properties
+    const goalProgress = progressInsights.goalProgress || [];
+    const overallEffectiveness = progressInsights.overallTreatmentEffectiveness || {
+      rating: 5,
+      trends: 'stable' as const,
+      keyIndicators: []
+    };
+    const recommendations = progressInsights.recommendations || {
+      treatmentAdjustments: [],
+      newGoals: [],
+      interventions: []
+    };
+    const sessionQuality = progressInsights.sessionQuality || {
+      engagement: 5,
+      therapeuticRapport: 5,
+      progressTowardGoals: 5
+    };
+
     console.log('[SmartActions] Processing progress insights:', {
-      goalCount: progressInsights.goalProgress.length,
-      overallEffectiveness: progressInsights.overallTreatmentEffectiveness.rating,
-      trends: progressInsights.overallTreatmentEffectiveness.trends
+      goalCount: goalProgress.length,
+      overallEffectiveness: overallEffectiveness.rating,
+      trends: overallEffectiveness.trends,
+      hasRecommendations: recommendations.interventions.length > 0,
+      hasSessionQuality: !!progressInsights.sessionQuality
     });
 
     // Process goal progress
-    for (const goal of progressInsights.goalProgress) {
+    for (const goal of goalProgress) {
       if (goal.currentStatus === 'achieved') {
         actions.push(this.createGoalAchievedAction(goal));
-      } else if (goal.barriers.length > 0) {
+      } else if (goal.barriers && goal.barriers.length > 0) {
         actions.push(this.createAddressBarriersAction(goal));
       }
     }
 
     // Treatment effectiveness actions
-    if (progressInsights.overallTreatmentEffectiveness.rating < 5) {
+    if (overallEffectiveness.rating < 5) {
       actions.push(this.createTreatmentAdjustmentAction(progressInsights));
     }
 
     // New interventions
-    if (progressInsights.recommendations.interventions.length > 0) {
-      actions.push(this.createNewInterventionAction(progressInsights.recommendations));
+    if (recommendations.interventions && recommendations.interventions.length > 0) {
+      actions.push(this.createNewInterventionAction(recommendations));
     }
 
     // Session quality actions
-    const sessionQuality = progressInsights.sessionQuality;
     if (sessionQuality.engagement < 5 || sessionQuality.therapeuticRapport < 5) {
       actions.push(this.createImproveEngagementAction(sessionQuality));
     }

@@ -531,7 +531,7 @@ export default function TranscriptReviewPageV2() {
 
         <main className="flex-1 overflow-hidden">
           <SplitPane
-            defaultSizes={[60, 40]}
+            defaultSizes={[70, 30]}
             minSize={30}
             maxSize={80}
             onResize={handlePanelResize}

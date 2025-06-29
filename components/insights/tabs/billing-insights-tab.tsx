@@ -204,12 +204,12 @@ export function BillingInsightsTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-blue-500" />
-                  <h3 className="font-medium">Session Information</h3>
+                  <h3 className="text-base font-medium">Session Information</h3>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="text-xs">
-                    {Math.round(confidence * 100)}% confidence
-                  </Badge>
+                <Badge variant="outline" className="text-sm text-muted-foreground">
+                  {Math.round(confidence * 100)}% confidence
+                </Badge>
                   {onExportCodes && (
                     <Button variant="ghost" size="sm" onClick={onExportCodes}>
                       <Download className="h-3 w-3 mr-1" />
@@ -245,7 +245,7 @@ export function BillingInsightsTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <ThumbsUp className="h-4 w-4 text-green-500" />
-                  <h3 className="font-medium">High-Confidence Recommendations</h3>
+                  <h3 className="text-base font-medium">High-Confidence Recommendations</h3>
                   <Badge className="bg-green-100 text-green-800 text-xs">
                     {highConfidenceCodes.length} codes ≥80%
                   </Badge>
@@ -341,7 +341,7 @@ export function BillingInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <FileText className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">Medium Confidence Codes</span>
+                  <span className="text-base font-medium">Medium Confidence Codes</span>
                   <Badge variant="outline" className="text-xs">
                     {mediumConfidenceCodes.length} codes 60-79%
                   </Badge>
@@ -398,7 +398,7 @@ export function BillingInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-4 w-4 text-yellow-500" />
-                  <span className="font-medium">Review Required</span>
+                  <span className="text-base font-medium">Review Required</span>
                   <Badge variant="outline" className="text-xs">
                     {lowConfidenceCodes.length} codes &lt;60%
                   </Badge>
@@ -455,7 +455,7 @@ export function BillingInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-4 w-4 text-purple-500" />
-                  <span className="font-medium">Billing Optimization</span>
+                  <span className="text-base font-medium">Billing Optimization</span>
                   <Badge variant="outline" className="text-xs">
                     {(billingOptimization.suggestedAdjustments?.length || 0) + 
                      (billingOptimization.complianceIssues?.length || 0) + 
@@ -718,7 +718,7 @@ function BillingSummarySection({
 
   return (
     <div className="space-y-3 pt-4 border-t">
-      <h3 className="font-medium">Summary</h3>
+      <h3 className="text-base font-medium">Summary</h3>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="text-center">

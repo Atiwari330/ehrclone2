@@ -147,10 +147,10 @@ export function SafetyInsightsTab({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Shield className="h-4 w-4 text-blue-500" />
-                <h3 className="font-medium">Risk Assessment</h3>
+                <h3 className="text-base font-medium">Risk Assessment</h3>
               </div>
               <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-sm text-muted-foreground">
                   {Math.round(confidence * 100)}% confidence
                 </Badge>
                 <RiskLevelBadge risk={riskAssessment.overallRisk} />
@@ -186,7 +186,7 @@ export function SafetyInsightsTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="h-4 w-4 text-red-500" />
-                  <h3 className="font-medium">Priority Alerts</h3>
+                  <h3 className="text-base font-medium">Priority Alerts</h3>
                   <Badge variant="destructive" className="text-xs">
                     {priorityAlerts.length}
                   </Badge>
@@ -311,7 +311,7 @@ export function SafetyInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">Risk & Protective Factors</span>
+                  <span className="text-base font-medium">Risk & Protective Factors</span>
                   <Badge variant="outline" className="text-xs">
                     {(riskAssessment.riskFactors?.length || 0) + (riskAssessment.protectiveFactors?.length || 0)} factors
                   </Badge>
@@ -374,7 +374,7 @@ export function SafetyInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-4 w-4 text-yellow-500" />
-                  <span className="font-medium">Other Alerts</span>
+                  <span className="text-base font-medium">Other Alerts</span>
                   <Badge variant="outline" className="text-xs">
                     {otherAlerts.length}
                   </Badge>
@@ -429,7 +429,7 @@ export function SafetyInsightsTab({
               >
                 <div className="flex items-center space-x-2">
                   <ArrowRight className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">Recommendations</span>
+                  <span className="text-base font-medium">Recommendations</span>
                   <Badge variant="outline" className="text-xs">
                     {(recommendations.immediate?.length || 0) + 
                      (recommendations.shortTerm?.length || 0) + 

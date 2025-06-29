@@ -172,7 +172,7 @@ export function InsightsDrawer({
       {/* Header */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">AI Insights</h2>
+          <h2 className="text-base font-medium">AI Insights</h2>
           
           {/* Controls */}
           <div className="flex items-center space-x-2">
