@@ -110,7 +110,6 @@ export default function TranscriptReviewPageV2() {
   
   // Insights drawer state
   const [activeInsightTab, setActiveInsightTab] = React.useState<'safety' | 'billing' | 'progress' | 'note'>('note');
-  const [highlightsEnabled, setHighlightsEnabled] = React.useState(true);
 
   // Fetch transcript data
   React.useEffect(() => {
@@ -223,16 +222,6 @@ export default function TranscriptReviewPageV2() {
     });
   }, [sessionId]);
 
-  // Handle highlights toggle
-  const handleToggleHighlights = React.useCallback(() => {
-    setHighlightsEnabled(prev => !prev);
-    
-    console.log('[TranscriptReviewV2] Highlights toggled:', {
-      enabled: !highlightsEnabled,
-      sessionId,
-      timestamp: Date.now()
-    });
-  }, [highlightsEnabled, sessionId]);
 
   // Handle smart action execution
   const handleActionExecute = React.useCallback((action: any) => {
@@ -442,8 +431,6 @@ export default function TranscriptReviewPageV2() {
                   <TranscriptDisplay 
                     entries={transcriptEntries}
                     className="h-full p-4"
-                    insights={aiInsights}
-                    enableHighlighting={highlightsEnabled}
                   />
                 )}
               </div>
@@ -489,8 +476,6 @@ export default function TranscriptReviewPageV2() {
                   <TranscriptDisplay 
                     entries={transcriptEntries}
                     className="h-full rounded-lg border p-4"
-                    insights={aiInsights}
-                    enableHighlighting={highlightsEnabled}
                   />
                 )}
               </div>
@@ -502,8 +487,6 @@ export default function TranscriptReviewPageV2() {
                   activeTab={activeInsightTab}
                   onTabChange={handleInsightTabChange}
                   onActionExecute={handleActionExecute}
-                  highlightsEnabled={highlightsEnabled}
-                  onToggleHighlights={handleToggleHighlights}
                   className="h-full"
                 />
               </div>
@@ -546,8 +529,6 @@ export default function TranscriptReviewPageV2() {
                 <TranscriptDisplay 
                   entries={transcriptEntries}
                   className="h-full p-4"
-                  insights={aiInsights}
-                  enableHighlighting={highlightsEnabled}
                 />
               )}
             </div>
@@ -559,8 +540,6 @@ export default function TranscriptReviewPageV2() {
                 activeTab={activeInsightTab}
                 onTabChange={handleInsightTabChange}
                 onActionExecute={handleActionExecute}
-                highlightsEnabled={highlightsEnabled}
-                onToggleHighlights={handleToggleHighlights}
                 className="h-full"
               />
             </div>

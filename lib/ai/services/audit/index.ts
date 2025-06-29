@@ -83,7 +83,8 @@ export class NullAuditService implements AuditService {
         billing_cpt: { count: 0, avgDurationMs: 0, successRate: 0, avgTokens: 0 },
         billing_icd10: { count: 0, avgDurationMs: 0, successRate: 0, avgTokens: 0 },
         treatment_progress: { count: 0, avgDurationMs: 0, successRate: 0, avgTokens: 0 },
-        chat_with_chart: { count: 0, avgDurationMs: 0, successRate: 0, avgTokens: 0 }
+        chat_with_chart: { count: 0, avgDurationMs: 0, successRate: 0, avgTokens: 0 },
+        clinical_note: { count: 0, avgDurationMs: 0, successRate: 0, avgTokens: 0 }
       },
       topErrors: []
     };

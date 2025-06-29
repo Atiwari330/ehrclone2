@@ -225,7 +225,8 @@ export class InMemoryAICache implements AICache {
       billing_cpt: 0,
       billing_icd10: 0,
       treatment_progress: 0,
-      chat_with_chart: 0
+      chat_with_chart: 0,
+      clinical_note: 0
     };
     
     for (const node of this.cache.values()) {

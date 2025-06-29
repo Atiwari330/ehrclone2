@@ -289,11 +289,12 @@ export class StructuredAIService {
    */
   private getModelForPipeline(pipelineType: PipelineType): string {
     const modelMap: Record<PipelineType, string> = {
-      safety_check: 'chat-model-reasoning',      // Use reasoning model for safety analysis
-      billing_cpt: 'chat-model',                 // Standard model for billing
-      billing_icd10: 'chat-model',               // Standard model for diagnoses
-      treatment_progress: 'chat-model-reasoning', // Reasoning for progress insights
-      chat_with_chart: 'chat-model'              // Standard model for chat
+      safety_check: 'chat-model',
+      billing_cpt: 'chat-model',
+      billing_icd10: 'chat-model',
+      treatment_progress: 'chat-model-reasoning',
+      chat_with_chart: 'chat-model',
+      clinical_note: 'chat-model'
     };
     
     return modelMap[pipelineType] || 'chat-model';
@@ -308,7 +309,8 @@ export class StructuredAIService {
       billing_cpt: 0.2,        // Very low for accurate code selection
       billing_icd10: 0.2,      // Very low for accurate diagnosis codes
       treatment_progress: 0.5, // Moderate for balanced analysis
-      chat_with_chart: 0.7     // Higher for more natural conversation
+      chat_with_chart: 0.7,    // Higher for more natural conversation
+      clinical_note: 0.4       // Moderate for clinical note generation
     };
     
     return temperatureMap[pipelineType] || 0.7;
@@ -323,7 +325,8 @@ export class StructuredAIService {
       billing_cpt: 1500,        // Increased for comprehensive billing analysis
       billing_icd10: 1000,      // Moderate for diagnosis extraction
       treatment_progress: 2500, // More for comprehensive progress report
-      chat_with_chart: 2000     // Flexible for chat responses
+      chat_with_chart: 2000,    // Flexible for chat responses
+      clinical_note: 3000       // More tokens for clinical note generation
     };
     
     return maxTokensMap[pipelineType] || 2000;

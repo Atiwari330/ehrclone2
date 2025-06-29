@@ -28,8 +28,6 @@ interface InsightsDrawerProps {
   activeTab?: 'safety' | 'billing' | 'progress' | 'note';
   onTabChange?: (tab: string) => void;
   onActionExecute?: (action: SmartAction) => void;
-  highlightsEnabled?: boolean;
-  onToggleHighlights?: () => void;
   className?: string;
 }
 
@@ -38,8 +36,6 @@ export function InsightsDrawer({
   activeTab = 'note',
   onTabChange,
   onActionExecute,
-  highlightsEnabled = true,
-  onToggleHighlights,
   className
 }: InsightsDrawerProps) {
   // Calculate badge counts from insights data - OPTIMIZED: Enhanced memoization with detailed logging
@@ -97,16 +93,6 @@ export function InsightsDrawer({
     onTabChange?.(newTab);
   }, [activeTab, onTabChange]);
 
-  // Handle highlight toggle
-  const handleToggleHighlights = React.useCallback(() => {
-    console.log('[InsightsDrawer] Toggle highlights:', {
-      wasEnabled: highlightsEnabled,
-      willBeEnabled: !highlightsEnabled,
-      timestamp: Date.now()
-    });
-    
-    onToggleHighlights?.();
-  }, [highlightsEnabled, onToggleHighlights]);
 
   // Calculate overall analysis progress
   const overallProgress = insights.overallProgress || 0;
@@ -183,28 +169,6 @@ export function InsightsDrawer({
           
           {/* Controls */}
           <div className="flex items-center space-x-2">
-            {/* Highlights Toggle */}
-            {onToggleHighlights && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggleHighlights}
-                className="flex items-center space-x-1"
-              >
-                {highlightsEnabled ? (
-                  <>
-                    <EyeOff className="h-3 w-3" />
-                    <span className="text-xs">Hide</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-3 w-3" />
-                    <span className="text-xs">Show</span>
-                  </>
-                )}
-              </Button>
-            )}
-            
             {/* Settings */}
             <Button variant="ghost" size="sm">
               <Settings className="h-3 w-3" />

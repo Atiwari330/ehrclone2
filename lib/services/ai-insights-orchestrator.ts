@@ -542,8 +542,14 @@ export class AIInsightsOrchestrator {
         error: null,
         progress: 0
       },
+      note: {
+        status: 'idle',
+        data: null,
+        error: null,
+        progress: 0
+      },
       overallProgress: 0,
-      lastUpdated: now
+      lastUpdated: Date.now()
     };
 
     // Process each result

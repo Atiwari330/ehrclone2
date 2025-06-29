@@ -41,8 +41,6 @@ import { BillingInsightsPanel } from '@/components/billing-insights-panel';
 import { ProgressInsightsPanel } from '@/components/progress-insights-panel';
 import { PipelineProgressIndicator } from '@/components/pipeline-progress-indicator';
 import { TranscriptDisplay } from '@/components/transcript-display';
-import { TranscriptNavigation } from '@/components/transcript-navigation';
-import { transcriptHighlighter } from '@/lib/services/transcript-highlighter';
 import { SmartActionBar } from '@/components/smart-action-bar';
 import { executeOneClickWorkflow } from '@/lib/workflows/one-click-actions';
 
@@ -112,26 +110,6 @@ export default function TranscriptReviewPage() {
     }
   });
   
-  // Generate highlights when AI insights are available
-  useEffect(() => {
-    if (transcript && aiInsights.insights && (
-      aiInsights.safetyState.status === 'success' ||
-      aiInsights.billingState.status === 'success' ||
-      aiInsights.progressState.status === 'success'
-    )) {
-      const highlights = transcriptHighlighter.generateHighlights(
-        transcript.entries,
-        aiInsights.insights
-      );
-      setNavigationHighlights(highlights);
-      
-      console.log('[TranscriptReview] Generated navigation highlights:', {
-        sessionId,
-        highlightCount: highlights.length,
-        timestamp: Date.now()
-      });
-    }
-  }, [transcript, aiInsights.insights, aiInsights.safetyState.status, aiInsights.billingState.status, aiInsights.progressState.status, sessionId]);
   
   // Fetch transcript data
   useEffect(() => {

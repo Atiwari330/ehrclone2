@@ -305,36 +305,6 @@ export interface AIInsightsAPIResponse {
   timestamp: string;
 }
 
-// Transcript Highlighting Types
-export interface TranscriptHighlight {
-  entryId: string;
-  startIndex: number;
-  endIndex: number;
-  type: 'safety' | 'billing' | 'progress';
-  severity: InsightSeverity;
-  insightId: string;
-  color: string;
-  tooltip?: string;
-}
-
-export interface HighlightConfig {
-  safety: {
-    critical: { color: string; opacity: number };
-    high: { color: string; opacity: number };
-    medium: { color: string; opacity: number };
-    low: { color: string; opacity: number };
-  };
-  billing: {
-    primary: { color: string; opacity: number };
-    secondary: { color: string; opacity: number };
-    suggested: { color: string; opacity: number };
-  };
-  progress: {
-    achieved: { color: string; opacity: number };
-    in_progress: { color: string; opacity: number };
-    barriers: { color: string; opacity: number };
-  };
-}
 
 // Smart Actions Types
 export interface SmartAction {
@@ -411,23 +381,4 @@ export const DEFAULT_AI_INSIGHTS_CONFIG: AIInsightsConfig = {
   globalTimeout: 45000, // 45 seconds for all pipelines
   parallelExecution: true,
   progressiveLoading: true,
-};
-
-export const DEFAULT_HIGHLIGHT_CONFIG: HighlightConfig = {
-  safety: {
-    critical: { color: '#ef4444', opacity: 0.3 }, // red-500
-    high: { color: '#f97316', opacity: 0.25 }, // orange-500
-    medium: { color: '#eab308', opacity: 0.2 }, // yellow-500
-    low: { color: '#84cc16', opacity: 0.15 }, // lime-500
-  },
-  billing: {
-    primary: { color: '#22c55e', opacity: 0.25 }, // green-500
-    secondary: { color: '#10b981', opacity: 0.2 }, // emerald-500
-    suggested: { color: '#06b6d4', opacity: 0.15 }, // cyan-500
-  },
-  progress: {
-    achieved: { color: '#3b82f6', opacity: 0.25 }, // blue-500
-    in_progress: { color: '#8b5cf6', opacity: 0.2 }, // violet-500
-    barriers: { color: '#ec4899', opacity: 0.15 }, // pink-500
-  },
 };
