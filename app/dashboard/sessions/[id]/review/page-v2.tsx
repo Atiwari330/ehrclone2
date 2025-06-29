@@ -109,7 +109,7 @@ export default function TranscriptReviewPageV2() {
   const [panelSizes, setPanelSizes] = React.useState<[number, number]>([60, 40]);
   
   // Insights drawer state
-  const [activeInsightTab, setActiveInsightTab] = React.useState<'safety' | 'billing' | 'progress'>('safety');
+  const [activeInsightTab, setActiveInsightTab] = React.useState<'safety' | 'billing' | 'progress' | 'note'>('note');
   const [highlightsEnabled, setHighlightsEnabled] = React.useState(true);
 
   // Fetch transcript data
@@ -214,7 +214,7 @@ export default function TranscriptReviewPageV2() {
 
   // Handle insights tab change
   const handleInsightTabChange = React.useCallback((tab: string) => {
-    setActiveInsightTab(tab as 'safety' | 'billing' | 'progress');
+    setActiveInsightTab(tab as 'safety' | 'billing' | 'progress' | 'note');
     
     console.log('[TranscriptReviewV2] Insights tab changed:', {
       tab,

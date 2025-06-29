@@ -15,8 +15,8 @@ import type { AIInsightsState } from '@/lib/types/ai-insights';
 
 interface AIInsightsProgressBannerProps {
   insights: AIInsightsState;
-  activeInsightTab?: 'safety' | 'billing' | 'progress';
-  onMetricClick?: (tab: 'safety' | 'billing' | 'progress') => void;
+  activeInsightTab?: 'safety' | 'billing' | 'progress' | 'note';
+  onMetricClick?: (tab: 'safety' | 'billing' | 'progress' | 'note') => void;
   className?: string;
 }
 

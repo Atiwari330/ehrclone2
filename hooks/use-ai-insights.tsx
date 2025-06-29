@@ -14,11 +14,14 @@ import {
   SafetyInsights, 
   BillingInsights, 
   ProgressInsights,
+  NoteGenerationInsights,
   AIInsightsConfig,
   DEFAULT_AI_INSIGHTS_CONFIG,
   PipelineUpdate,
   PipelineError,
-  PipelineTimeoutError
+  PipelineTimeoutError,
+  PIPELINES,
+  PipelineKey
 } from '@/lib/types/ai-insights';
 import { 
   PipelineStatusCode, 
@@ -27,9 +30,6 @@ import {
   createInitialCoordinationStatus,
   calculateOverallProgress
 } from '@/lib/types/pipeline-status';
-
-// Pipeline key type for type safety
-type PipelineKey = 'safety' | 'billing' | 'progress';
 
 // Transform API response to match expected TypeScript structure
 function transformApiResponseToInsights(pipeline: PipelineKey, apiData: any): any {
@@ -92,6 +92,12 @@ function transformApiResponseToInsights(pipeline: PipelineKey, apiData: any): an
         confidence: apiData.confidence?.score || apiData.confidence || 0
       };
 
+    case 'note':
+      return {
+        sections: apiData.sections || [],
+        confidence: apiData.confidence?.score || apiData.confidence || 0
+      };
+
     default:
       return apiData;
   }
@@ -122,6 +128,7 @@ export interface AIInsightsHookResult {
   safetyState: PipelineState<SafetyInsights>;
   billingState: PipelineState<BillingInsights>;
   progressState: PipelineState<ProgressInsights>;
+  noteState: PipelineState<NoteGenerationInsights>;
   
   // Actions
   startAnalysis: () => void;
@@ -198,6 +205,15 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
         endTime: undefined,
         metadata: undefined
       },
+      note: {
+        status: 'idle' as const,
+        data: null,
+        error: null,
+        progress: 0,
+        startTime: undefined,
+        endTime: undefined,
+        metadata: undefined
+      },
       overallProgress: 0,
       lastUpdated: now
     };
@@ -232,11 +248,13 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
         lastUpdated: Date.now()
       };
 
-      // Calculate overall progress from pipeline states
-      const safetyProgress = newState.safety.progress || 0;
-      const billingProgress = newState.billing.progress || 0;
-      const progressProgress = newState.progress.progress || 0;
-      newState.overallProgress = Math.round((safetyProgress + billingProgress + progressProgress) / 3);
+      // Calculate overall progress from pipeline states using centralized PIPELINES config
+      const progressValues = PIPELINES.map(pipeline => 
+        (newState[pipeline] as PipelineState).progress || 0
+      );
+      newState.overallProgress = Math.round(
+        progressValues.reduce((sum, progress) => sum + progress, 0) / PIPELINES.length
+      );
 
       // Log state transition (moved inline to avoid dependency issues)
       if (updates.status && updates.status !== oldStatus) {
@@ -293,12 +311,19 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
         timestamp: startTime
       });
 
+      // Determine API endpoint
+      const endpoint = `/api/pipelines/${
+        pipelineType === 'progress' ? 'progress' : 
+        pipelineType === 'billing' ? 'billing' : 
+        pipelineType === 'safety' ? 'safety-check' :
+        pipelineType === 'note' ? 'note-generation' : 'safety-check'
+      }`;
+
       // Network request tracking - Before API call
       console.log('[AIInsights] NETWORK REQUEST START:', {
         sessionId,
         pipeline: pipelineType,
-        endpoint: `/api/pipelines/${pipelineType === 'progress' ? 'progress' : 
-                     pipelineType === 'billing' ? 'billing' : 'safety-check'}`,
+        endpoint,
         requestId,
         retryAttempt,
         timestamp: startTime
@@ -312,10 +337,6 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
         startTime,
         error: null
       });
-
-      // Determine API endpoint
-      const endpoint = `/api/pipelines/${pipelineType === 'progress' ? 'progress' : 
-                        pipelineType === 'billing' ? 'billing' : 'safety-check'}`;
 
       // Make API request
       const response = await fetch(endpoint, {
@@ -501,24 +522,25 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
       sessionId,
       patientId,
       transcriptLength: transcript.length,
-      enabledPipelines: (['safety', 'billing', 'progress'] as PipelineKey[])
-        .filter(key => finalConfig[key].enabled),
+      enabledPipelines: PIPELINES.filter(key => finalConfig[key].enabled),
       timestamp: Date.now()
     });
 
     analysisStartTime.current = Date.now();
     hasAutoStarted.current = true;
 
-    // Start all enabled pipelines in parallel
-    if (finalConfig.safety.enabled) {
-      executePipeline('safety', 0);
-    }
-    if (finalConfig.billing.enabled) {
-      executePipeline('billing', 0);
-    }
-    if (finalConfig.progress.enabled) {
-      executePipeline('progress', 0);
-    }
+    // Start all enabled pipelines in parallel using centralized PIPELINES config
+    PIPELINES.forEach(pipeline => {
+      if (finalConfig[pipeline].enabled) {
+        console.log('[AIInsights] Starting pipeline:', {
+          sessionId,
+          pipeline,
+          enabled: finalConfig[pipeline].enabled,
+          priority: finalConfig[pipeline].priority
+        });
+        executePipeline(pipeline, 0);
+      }
+    });
   }, [sessionId, patientId, transcript, finalConfig, executePipeline]);
 
   // Retry specific pipeline
@@ -538,16 +560,13 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
   const retryAll = useCallback(() => {
     console.log('[AIInsights] Retry all requested:', {
       sessionId,
-      currentStates: {
-        safety: insights.safety.status,
-        billing: insights.billing.status,
-        progress: insights.progress.status
-      },
+      currentStates: Object.fromEntries(
+        PIPELINES.map(pipeline => [pipeline, insights[pipeline].status])
+      ),
       timestamp: Date.now()
     });
 
-    const pipelineKeys: PipelineKey[] = ['safety', 'billing', 'progress'];
-    const failedPipelines = pipelineKeys.filter(key => {
+    const failedPipelines = PIPELINES.filter(key => {
       const pipelineState = insights[key] as PipelineState;
       return pipelineState.status === 'error';
     });
@@ -573,18 +592,16 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
     activeRequests.current.clear();
   }, [sessionId]);
 
-  // Utility functions
+  // Utility functions using centralized PIPELINES config
   const getCompletedPipelines = useCallback(() => {
-    const pipelineKeys: PipelineKey[] = ['safety', 'billing', 'progress'];
-    return pipelineKeys.filter(key => {
+    return PIPELINES.filter(key => {
       const pipelineState = insights[key] as PipelineState;
       return pipelineState.status === 'success';
     });
   }, [insights]);
 
   const getFailedPipelines = useCallback(() => {
-    const pipelineKeys: PipelineKey[] = ['safety', 'billing', 'progress'];
-    return pipelineKeys.filter(key => {
+    return PIPELINES.filter(key => {
       const pipelineState = insights[key] as PipelineState;
       return pipelineState.status === 'error';
     });
@@ -594,7 +611,7 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
     if (!analysisStartTime.current) return null;
 
     const completedPipelines = getCompletedPipelines();
-    const totalPipelines = 3; // safety, billing, progress
+    const totalPipelines = PIPELINES.length;
 
     if (completedPipelines.length === 0) return null;
 
@@ -618,17 +635,18 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
     }
   }, [autoStart, transcript, sessionId, patientId]); // Removed startAnalysis dependency
 
-  // Check if analysis is complete
+  // Check if analysis is complete using centralized PIPELINES config
   useEffect(() => {
     const completed = getCompletedPipelines();
     const failed = getFailedPipelines();
-    const total = 3;
+    const total = PIPELINES.length;
 
     if (completed.length + failed.length === total) {
       console.log('[AIInsights] Analysis complete:', {
         sessionId,
         completed: completed.length,
         failed: failed.length,
+        totalPipelines: total,
         totalExecutionTime: analysisStartTime.current ? 
           Date.now() - analysisStartTime.current : null,
         performance
@@ -648,18 +666,18 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
     };
   }, [sessionId, cancelAnalysis]);
 
-  // Derived state
-  const isLoading = ['loading', 'retrying'].includes(insights.safety.status) ||
-                   ['loading', 'retrying'].includes(insights.billing.status) ||
-                   ['loading', 'retrying'].includes(insights.progress.status);
+  // Derived state using centralized PIPELINES config
+  const isLoading = PIPELINES.some(pipeline => 
+    ['loading', 'retrying'].includes((insights[pipeline] as PipelineState).status)
+  );
 
-  const hasErrors = insights.safety.status === 'error' ||
-                   insights.billing.status === 'error' ||
-                   insights.progress.status === 'error';
+  const hasErrors = PIPELINES.some(pipeline => 
+    (insights[pipeline] as PipelineState).status === 'error'
+  );
 
-  const isComplete = ['success', 'error'].includes(insights.safety.status) &&
-                    ['success', 'error'].includes(insights.billing.status) &&
-                    ['success', 'error'].includes(insights.progress.status);
+  const isComplete = PIPELINES.every(pipeline => 
+    ['success', 'error'].includes((insights[pipeline] as PipelineState).status)
+  );
 
   return {
     // State
@@ -672,6 +690,7 @@ export function useAIInsights(options: UseAIInsightsOptions): AIInsightsHookResu
     safetyState: insights.safety,
     billingState: insights.billing,
     progressState: insights.progress,
+    noteState: insights.note,
     
     // Actions
     startAnalysis,

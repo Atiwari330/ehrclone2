@@ -12,3 +12,4 @@ export * from './base';
 export * from './safety-check';
 export * from './billing';
 export * from './treatment-progress';
+export * from './clinical-note';

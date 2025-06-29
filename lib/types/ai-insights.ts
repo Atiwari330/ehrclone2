@@ -5,6 +5,10 @@
  * and progressive loading state management
  */
 
+// Centralized Pipeline Configuration
+export const PIPELINES = ['safety', 'billing', 'progress', 'note'] as const;
+export type PipelineKey = typeof PIPELINES[number];
+
 // Base types for all AI insights
 export type InsightSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type InsightConfidence = number; // 0.0 to 1.0
@@ -130,6 +134,19 @@ export interface ProgressInsights {
   confidence: InsightConfidence;
 }
 
+// Clinical Note Generation Results
+export interface NoteSection {
+  type: 'subjective' | 'objective' | 'assessment' | 'plan';
+  title: string;
+  content: string;
+  confidence: InsightConfidence;
+}
+
+export interface NoteGenerationInsights {
+  sections: NoteSection[];
+  confidence: InsightConfidence;
+}
+
 // Pipeline State Management
 export interface PipelineState<T = any> {
   status: PipelineStatus;
@@ -146,6 +163,7 @@ export interface AIInsightsState {
   safety: PipelineState<SafetyInsights>;
   billing: PipelineState<BillingInsights>;
   progress: PipelineState<ProgressInsights>;
+  note: PipelineState<NoteGenerationInsights>;
   overallProgress: number; // 0-100
   estimatedCompletion?: number; // timestamp
   lastUpdated: number; // timestamp
@@ -165,6 +183,7 @@ export interface AIInsightsConfig {
   safety: PipelineConfig;
   billing: PipelineConfig;
   progress: PipelineConfig;
+  note: PipelineConfig;
   globalTimeout: number; // milliseconds
   parallelExecution: boolean;
   progressiveLoading: boolean;
@@ -335,17 +354,7 @@ export interface SmartAction {
   action: () => Promise<void>;
 }
 
-// Real-time Note Generation Types
-export interface NoteSection {
-  type: 'subjective' | 'objective' | 'assessment' | 'plan' | 'custom';
-  title: string;
-  content: string;
-  confidence: InsightConfidence;
-  sources: string[]; // transcript entry IDs
-  lastUpdated: number;
-  isComplete: boolean;
-}
-
+// Real-time Note Preview Types
 export interface LiveNotePreview {
   sections: NoteSection[];
   completionPercentage: number;
@@ -387,6 +396,14 @@ export const DEFAULT_AI_INSIGHTS_CONFIG: AIInsightsConfig = {
     enabled: true,
     priority: 6,
     timeout: 20000, // 20 seconds
+    retryAttempts: 2,
+    cacheEnabled: true,
+    cacheTTL: 1800, // 30 minutes
+  },
+  note: {
+    enabled: true,
+    priority: 4, // Lower priority than other pipelines
+    timeout: 35000, // 35 seconds (note generation can take longer)
     retryAttempts: 2,
     cacheEnabled: true,
     cacheTTL: 1800, // 30 minutes

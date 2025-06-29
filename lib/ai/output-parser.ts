@@ -338,6 +338,13 @@ export async function getParserForPipeline(pipelineType: PipelineType): Promise<
         attemptPartialExtraction: true
       });
       
+    case 'clinical_note':
+      return new OutputParser({
+        schema: schemas.clinicalNoteOutputSchema,
+        pipelineType,
+        attemptPartialExtraction: true
+      });
+      
     default:
       throw new Error(`No parser configured for pipeline type: ${pipelineType}`);
   }

@@ -243,6 +243,7 @@ export interface PipelineOutputMap {
   billing_icd10: z.infer<typeof import('@/lib/ai/schemas/billing').billingOutputSchema>;
   treatment_progress: z.infer<typeof import('@/lib/ai/schemas/treatment-progress').treatmentProgressOutputSchema>;
   chat_with_chart: { response: string; confidence: number };
+  clinical_note: z.infer<typeof import('@/lib/ai/schemas/clinical-note').clinicalNoteOutputSchema>;
 }
 
 /**

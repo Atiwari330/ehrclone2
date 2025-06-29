@@ -641,7 +641,8 @@ export class CoreAIService implements AIService {
       billing_cpt: 'chat-model',                 // Standard model for billing
       billing_icd10: 'chat-model',               // Standard model for diagnoses
       treatment_progress: 'chat-model-reasoning', // Reasoning for progress insights
-      chat_with_chart: 'chat-model'              // Standard model for chat
+      chat_with_chart: 'chat-model',             // Standard model for chat
+      clinical_note: 'chat-model'                // Standard model for clinical notes
     };
     
     return modelMap[pipelineType] || 'chat-model';
@@ -657,7 +658,8 @@ export class CoreAIService implements AIService {
       billing_cpt: 0.2,        // Very low for accurate code selection
       billing_icd10: 0.2,      // Very low for accurate diagnosis codes
       treatment_progress: 0.5, // Moderate for balanced analysis
-      chat_with_chart: 0.7     // Higher for more natural conversation
+      chat_with_chart: 0.7,    // Higher for more natural conversation
+      clinical_note: 0.3       // Lower temperature for consistent clinical documentation
     };
     
     return temperatureMap[pipelineType] || 0.7;
@@ -673,7 +675,8 @@ export class CoreAIService implements AIService {
       billing_cpt: 1000,        // Moderate for code suggestions
       billing_icd10: 1000,      // Moderate for diagnosis extraction
       treatment_progress: 2000, // More for comprehensive progress report
-      chat_with_chart: 2000     // Flexible for chat responses
+      chat_with_chart: 2000,    // Flexible for chat responses
+      clinical_note: 2000       // Sufficient for comprehensive SOAP notes
     };
     
     return maxTokensMap[pipelineType] || 2000;
@@ -723,7 +726,8 @@ export class CoreAIService implements AIService {
       billing_cpt: 'billing-cpt-suggestion',
       billing_icd10: 'billing-diagnosis-extraction',
       treatment_progress: 'clinical-treatment-progress',
-      chat_with_chart: 'chat-with-chart'
+      chat_with_chart: 'chat-with-chart',
+      clinical_note: 'clinical-note-generation'
     };
     
     return promptMap[pipelineType];

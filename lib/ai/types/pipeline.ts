@@ -12,7 +12,8 @@ export type PipelineType =
   | 'billing_cpt'
   | 'billing_icd10'
   | 'treatment_progress'
-  | 'chat_with_chart';
+  | 'chat_with_chart'
+  | 'clinical_note';
 
 /**
  * Pipeline configuration by type
@@ -52,6 +53,13 @@ export const PIPELINE_CONFIG: Record<PipelineType, PipelineConfig> = {
     category: 'interactive',
     priority: 'low',
     maxRetries: 1
+  },
+  clinical_note: {
+    name: 'Clinical Note Generation',
+    description: 'Generate structured SOAP clinical notes from session transcripts',
+    category: 'clinical',
+    priority: 'normal',
+    maxRetries: 2
   }
 };
 

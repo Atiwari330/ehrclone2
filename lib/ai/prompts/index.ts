@@ -11,6 +11,7 @@ import { safetyCheckPromptTemplate, quickSafetyCheckPromptTemplate } from './saf
 import { cptSuggestionPromptTemplate } from './billing/cpt-suggestion';
 import { diagnosisExtractionPromptTemplate } from './billing/diagnosis-extraction';
 import { treatmentProgressPromptTemplate } from './clinical/treatment-progress';
+import { clinicalNotePromptTemplate } from './clinical/clinical-note';
 
 /**
  * Track initialization state to prevent double registration
@@ -68,6 +69,7 @@ async function performRegistration(): Promise<void> {
     
     // Clinical prompts
     { name: 'Treatment Progress', template: treatmentProgressPromptTemplate },
+    { name: 'Clinical Note Generation', template: clinicalNotePromptTemplate },
   ];
   
   const registrationResults: Array<{ name: string; id: string; success: boolean; error?: string }> = [];

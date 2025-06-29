@@ -16,8 +16,8 @@ interface StickyHeaderProps {
   primaryAction?: React.ReactNode;     // Primary CTA (Generate Note)
   secondaryActions?: React.ReactNode;  // Secondary actions menu
   aiInsights?: AIInsightsState;        // AI insights data for banner
-  activeInsightTab?: 'safety' | 'billing' | 'progress'; // Current active tab
-  onInsightTabClick?: (tab: 'safety' | 'billing' | 'progress') => void; // Tab click handler
+  activeInsightTab?: 'safety' | 'billing' | 'progress' | 'note'; // Current active tab
+  onInsightTabClick?: (tab: 'safety' | 'billing' | 'progress' | 'note') => void; // Tab click handler
   className?: string;
 }
 

@@ -10,6 +10,7 @@ import {
   AlertTriangle, 
   DollarSign, 
   TrendingUp, 
+  FileText,
   Eye, 
   EyeOff,
   Settings 
@@ -20,10 +21,11 @@ import { smartActionsEngine } from '@/lib/services/smart-actions-engine';
 import { SafetyInsightsTab } from './tabs/safety-insights-tab';
 import { BillingInsightsTab } from './tabs/billing-insights-tab';
 import { ProgressInsightsTab } from './tabs/progress-insights-tab';
+import { NoteInsightsTab } from './tabs/note-insights-tab';
 
 interface InsightsDrawerProps {
   insights: AIInsightsState;
-  activeTab?: 'safety' | 'billing' | 'progress';
+  activeTab?: 'safety' | 'billing' | 'progress' | 'note';
   onTabChange?: (tab: string) => void;
   onActionExecute?: (action: SmartAction) => void;
   highlightsEnabled?: boolean;
@@ -33,7 +35,7 @@ interface InsightsDrawerProps {
 
 export function InsightsDrawer({
   insights,
-  activeTab = 'safety',
+  activeTab = 'note',
   onTabChange,
   onActionExecute,
   highlightsEnabled = true,
@@ -46,6 +48,7 @@ export function InsightsDrawer({
       safetyStatus: insights.safety?.status,
       billingStatus: insights.billing?.status,
       progressStatus: insights.progress?.status,
+      noteStatus: insights.note?.status,
       timestamp: Date.now()
     });
 
@@ -61,11 +64,13 @@ export function InsightsDrawer({
       (goal: any) => goal.status === 'active'
     ).length || 0;
 
-    const result = { safety, billing, progress };
+    const note = insights.note?.data?.sections?.length || 0;
+
+    const result = { safety, billing, progress, note };
     
     console.log('[InsightsDrawer] Badge counts calculated:', {
       badges: result,
-      totalBadges: safety + billing + progress,
+      totalBadges: safety + billing + progress + note,
       timestamp: Date.now()
     });
 
@@ -76,7 +81,9 @@ export function InsightsDrawer({
     insights.billing?.status, 
     insights.billing?.data?.cptCodes,
     insights.progress?.status,
-    insights.progress?.data?.goalProgress
+    insights.progress?.data?.goalProgress,
+    insights.note?.status,
+    insights.note?.data?.sections
   ]);
 
   // Handle tab change with logging
@@ -243,7 +250,17 @@ export function InsightsDrawer({
         >
           {/* Tab Navigation */}
           <div className="px-4 pt-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger 
+                value="note" 
+                badge={badges.note}
+                badgeVariant={badges.note > 0 ? "default" : "outline"}
+                className="flex items-center space-x-1"
+              >
+                <FileText className="h-3 w-3" />
+                <span>Note</span>
+              </TabsTrigger>
+              
               <TabsTrigger 
                 value="safety" 
                 badge={badges.safety}
@@ -337,75 +354,30 @@ export function InsightsDrawer({
                 }}
               />
             </TabsContent>
+
+            <TabsContent value="note" className="h-full m-0">
+              <NoteInsightsTab 
+                data={insights.note?.data}
+                isLoading={insights.note?.status === 'loading'}
+                error={insights.note?.error}
+                onCopyNote={() => {
+                  console.log('[InsightsDrawer] Copy note requested');
+                  // TODO: Implement copy note workflow
+                }}
+                onDownloadNote={() => {
+                  console.log('[InsightsDrawer] Download note requested');
+                  // TODO: Implement download note workflow
+                }}
+                onEditNote={() => {
+                  console.log('[InsightsDrawer] Edit note requested');
+                  // TODO: Implement edit note workflow
+                }}
+              />
+            </TabsContent>
           </div>
         </Tabs>
       </div>
 
-      {/* Smart Actions Footer */}
-      {contextualActions.length > 0 && (
-        <div className="border-t p-4">
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Suggested Actions
-            </h3>
-            <div className="space-y-2">
-              {contextualActions.slice(0, 3).map((action) => (
-                <Button
-                  key={action.id}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left"
-                  onClick={async () => {
-                    console.log('[InsightsDrawer] Action execution started:', {
-                      actionId: action.id,
-                      title: action.title,
-                      tab: activeTab,
-                      priority: action.priority,
-                      requiresConfirmation: action.requiresConfirmation,
-                      timestamp: Date.now()
-                    });
-
-                    try {
-                      // Execute the action's function
-                      if (action.action) {
-                        await action.action();
-                      }
-
-                      // Call the onActionExecute callback for parent component handling
-                      onActionExecute?.(action);
-
-                      console.log('[InsightsDrawer] Action executed successfully:', {
-                        actionId: action.id,
-                        tab: activeTab,
-                        timestamp: Date.now()
-                      });
-                    } catch (error) {
-                      console.error('[InsightsDrawer] Action execution failed:', {
-                        actionId: action.id,
-                        error: error instanceof Error ? error.message : 'Unknown error',
-                        timestamp: Date.now()
-                      });
-                    }
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-xs">{action.title}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {action.description}
-                    </div>
-                  </div>
-                  <Badge 
-                    variant={action.priority >= 8 ? 'destructive' : 'secondary'}
-                    className="ml-2 text-xs"
-                  >
-                    {action.priority >= 8 ? 'high' : action.priority >= 5 ? 'medium' : 'low'}
-                  </Badge>
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
