@@ -12,8 +12,7 @@ import {
   TrendingUp, 
   FileText,
   Eye, 
-  EyeOff,
-  Settings 
+  EyeOff
 } from 'lucide-react';
 import { AIInsightsState, SmartAction } from '@/lib/types/ai-insights';
 import { cn } from '@/lib/utils';
@@ -164,18 +163,6 @@ export function InsightsDrawer({
     <div className={cn('h-full flex flex-col bg-background', className)}>
       {/* Header */}
       <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-medium">AI Insights</h2>
-          
-          {/* Controls */}
-          <div className="flex items-center space-x-2">
-            {/* Settings */}
-            <Button variant="ghost" size="sm">
-              <Settings className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-
         {/* Progress Indicator */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
